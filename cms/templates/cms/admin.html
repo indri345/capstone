@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: #f1f7ff;
+    color: #1e293b;
+}
+
+/* NAVBAR */
+.navbar {
+    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 40px;
+    align-items: center;
+}
+
+.logo {
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.nav-links a {
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 14px;
+}
+
+.nav-links a.active {
+    border-bottom: 2px solid white;
+}
+
+/* CONTAINER */
+.container {
+    width: 90%;
+    margin: 25px auto;
+    padding-bottom: 30px;
+}
+
+/* HERO */
+.hero {
+    background: linear-gradient(135deg, #60a5fa, #93c5fd);
+    padding: 28px 30px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    font-size: 24px;
+    color: white;
+}
+
+.hero p {
+    font-size: 13.5px;
+    margin-top: 6px;
+    color: rgba(255,255,255,0.9);
+}
+
+/* STATS & BOTTOM CARDS */
+.stats, .bottom {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+}
+
+.stats { margin-bottom: 25px; }
+.bottom { margin-top: 25px; }
+
+.card {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(14px);
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.06);
+    border: 1px solid rgba(255,255,255,0.65);
+}
+
+.card h4 {
+    font-size: 13.5px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.card h2 {
+    margin-top: 8px;
+    font-size: 26px;
+    color: #0f172a;
+}
+
+.card h2.highlight {
+    color: #3b82f6;
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+/* MAIN DASHBOARD GRIDS */
+.secondary-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 18px;
+    margin-bottom: 25px;
+    align-items: stretch;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 25px;
+    align-items: stretch;
+}
+
+/* BOX & CHART CARDS */
+.box, .chart-card {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.65);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.06);
+    display: flex;
+    flex-direction: column;
+}
+
+.box h4, .chart-card h4 {
+    margin-bottom: 20px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.chart-header h4 {
+    margin-bottom: 4px !important;
+}
+.chart-date-range {
+    font-size: 12px;
+    color: #64748b;
+}
+.chart-filters {
+    display: flex;
+    gap: 6px;
+    background: rgba(59,130,246,0.08);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(59,130,246,0.15);
+}
+.chart-filters button {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.chart-filters button:hover {
+    color: #1e293b;
+}
+.chart-filters button.active {
+    background: white;
+    color: #3b82f6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Canvas Wrappers */
+.canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    min-height: 260px;
+}
+
+.canvas-wrap canvas {
+    max-height: 100%;
+}
+
+/* SCROLLABLE LISTS */
+.recent-activity-list,
+.recent-feedback-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 6px;
+    max-height: 340px;
+}
+
+.recent-activity-list::-webkit-scrollbar,
+.recent-feedback-list::-webkit-scrollbar {
+    width: 6px;
+}
+.recent-activity-list::-webkit-scrollbar-track,
+.recent-feedback-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.recent-activity-list::-webkit-scrollbar-thumb,
+.recent-feedback-list::-webkit-scrollbar-thumb {
+    background: rgba(59,130,246,0.25);
+    border-radius: 999px;
+}
+
+/* LIST ITEMS */
+.activity-item,
+.feedback-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px;
+    border-radius: 14px;
+    background: #fcfdfe;
+    border: 1px solid rgba(59,130,246,0.15);
+    transition: background 0.2s ease;
+}
+
+.activity-item:hover,
+.feedback-item:hover {
+    background: #f8fbff;
+}
+
+.activity-icon,
+.feedback-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(59,130,246,0.12);
+    color: #3b82f6;
+    font-size: 16px;
+}
+
+.activity-copy,
+.feedback-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-title,
+.feedback-title {
+    font-size: 13.5px;
+    color: #1e293b;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.activity-time {
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.feedback-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.feedback-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: #1e293b;
+    background: #eff6ff;
+    border: 1px solid rgba(59,130,246,0.15);
+    font-weight: 500;
+}
+
+/* INSIGHTS LIST */
+.insight-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+}
+
+.insight-list li {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fcfdfe;
+    color: #334155;
+    font-size: 13.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(59,130,246,0.15);
+}
+
+.insight-list li strong {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .secondary-grid,
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 720px) {
+    .container { width: 95%; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <a href="{% url 'home' %}" class="logo">Digital Culture</a>
+    <div class="nav-links">
+        <a href="#" class="active">Control</a>
+        <a href="/admin-explore/">Explore</a>
+        <a href="/admin-feedback/">Feedback</a>
+        <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Admin Control Panel</h1>
+        <p>Memantau kinerja sistem, mengelola konten, dan menganalisis perilaku pengguna Pegadaian Digital Culture.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="card">
+            <h4>Total Content</h4>
+            <h2>{{ total_content }}</h2>
+        </div>
+        <div class="card">
+            <h4>Total Views</h4>
+            <h2>{{ total_views }}</h2>
+        </div>
+        <div class="card">
+            <h4>Active Content</h4>
+            <h2>{{ active_content }}</h2>
+        </div>
+        <div class="card">
+            <h4>Feedback</h4>
+            <h2>{{ total_feedback }}</h2>
+        </div>
+    </div>
+
+    <!-- MAIN (WEEKLY & RECENT ACTIVITY) -->
+    <div class="secondary-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <h4>Visitor Activity Analytics</h4>
+                    <div class="chart-date-range" id="activityDateRange">{{ initial_date_range_text }}</div>
+                </div>
+                <div class="chart-filters" id="activityFilters">
+                    <button class="active" data-period="1week">1 Week</button>
+                    <button data-period="1month">1 Month</button>
+                    <button data-period="6months">6 Months</button>
+                    <button data-period="1year">1 Year</button>
+                </div>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="weeklyActivityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="box">
+            <h4>Recent Activity</h4>
+            <div class="recent-activity-list">
+                {% for item in recent_admin_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon">{{ item.icon }}</div>
+                    <div class="activity-copy">
+                        <div class="activity-title">{{ item.title }}</div>
+                        <div class="activity-time">{{ item.when }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="activity-item">
+                    <div class="activity-icon">ℹ️</div>
+                    <div class="activity-copy">
+                        <div class="activity-title">Belum ada aktivitas admin terbaru.</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS GRID -->
+    <div class="analytics-grid">
+        <div class="chart-card">
+            <h4>Sentiment Overview</h4>
+            <div class="canvas-wrap">
+                <canvas id="sentimentPie"></canvas>
+            </div>
+        </div>
+
+        <div class="box">
+            <h4>Insights & Activity</h4>
+            <ul class="insight-list">
+                <li><strong>Total Feedback</strong> <span>{{ total_feedback }} entries</span></li>
+                <li><strong>Positive</strong> <span>{{ positive }} ({{ positive_percent }}%)</span></li>
+                <li><strong>Neutral</strong> <span>{{ neutral }} ({{ neutral_percent }}%)</span></li>
+                <li><strong>Negative</strong> <span>{{ negative }} ({{ negative_percent }}%)</span></li>
+            </ul>
+        </div>
+
+        <div class="box">
+            <h4>Recent Feedback</h4>
+            <div class="recent-feedback-list">
+                {% for fb in recent_feedbacks %}
+                <div class="feedback-item">
+                    <div class="feedback-icon">💬</div>
+                    <div class="feedback-copy">
+                        <div class="feedback-title">{{ fb.comment }}</div>
+                        <div class="feedback-meta">
+                            <span class="feedback-pill">{{ fb.sentiment }}</span>
+                            <span class="feedback-pill">⭐ {{ fb.rating }}</span>
+                            <span class="feedback-pill">{{ fb.platform }}</span>
+                            <span class="activity-time" style="margin-top:0;">{{ fb.when }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="feedback-item">
+                    <div class="feedback-icon">ℹ️</div>
+                    <div class="feedback-copy">
+                        <div class="feedback-title">Belum ada feedback terbaru.</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom">
+        <div class="card">
+            <h4>Total Visits</h4>
+            <h2>{{ total_visits }}</h2>
+        </div>
+        <div class="card">
+            <h4>Avg Time</h4>
+            <h2>{{ avg_time }}</h2>
+        </div>
+        <div class="card">
+            <h4>Engagement</h4>
+            <h2 class="highlight">{{ engagement_text }}</h2>
+        </div>
+        <div class="card">
+            <h4>Trends</h4>
+            <h2 class="highlight">{{ trends }}</h2>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Weekly Activity Chart
+const initialLabels = JSON.parse('{{ weekly_labels_json|escapejs }}');
+const initialData = JSON.parse('{{ weekly_data_json|escapejs }}');
+const initialAvgTimes = JSON.parse('{{ weekly_avg_times_json|escapejs }}');
+
+const activityChartCtx = document.getElementById('weeklyActivityChart').getContext('2d');
+let activityChart = new Chart(activityChartCtx, {
+    type: 'line',
+    data: {
+        labels: initialLabels,
+        datasets: [{
+            label: 'Visitor Activity',
+            data: initialData,
+            avgTimes: initialAvgTimes,
+            backgroundColor: 'rgba(59, 130, 246, 0.18)',
+            borderColor: '#3b82f6',
+            borderWidth: 3,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6',
+            tension: 0.35,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const val = context.parsed.y;
+                        const avg = context.dataset.avgTimes[context.dataIndex];
+                        return [
+                            `Visitor Activity: ${val}`,
+                            `Average Time: ${avg}`
+                        ];
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+            }
+        }
+    }
+});
+
+// Handle Filters
+document.querySelectorAll('#activityFilters button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('#activityFilters button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const period = this.getAttribute('data-period');
+        
+        fetch(`?action=get_chart_data&period=${period}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(res => {
+            document.getElementById('activityDateRange').textContent = res.date_range_text;
+            activityChart.data.labels = res.labels;
+            activityChart.data.datasets[0].data = res.data;
+            activityChart.data.datasets[0].avgTimes = res.avg_times;
+            activityChart.update();
+        })
+        .catch(err => console.error('Error fetching chart data:', err));
+    });
+});
+
+// Sentiment Overview Chart
+const sentimentPieCtx = document.getElementById('sentimentPie').getContext('2d');
+new Chart(sentimentPieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Positive', 'Neutral', 'Negative'],
+        datasets: [{
+            data: [{{ positive }}, {{ neutral }}, {{ negative }}],
+            backgroundColor: ['#16a34a', '#f59e0b', '#ef4444'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
+        }],
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+            legend: { 
+                position: 'bottom', 
+                labels: { color: '#334155', font: { family: 'Poppins' }, padding: 20 }
+            },
+            tooltip: { 
+                callbacks: { label: function(context) { return ` ${context.label}: ${context.parsed} entries`; } },
+                bodyFont: { family: 'Poppins' }
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>

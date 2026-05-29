@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ event.event_name }}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #F4F6F9;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .hero-img {
+            height: 380px;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .card-custom {
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .badge-core {
+            background: #016632;
+            color: white;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            background: #F4F6F9;
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid rgba(0,0,0,0.06);
+            height: 100%;
+        }
+
+        .rating {
+            color: #FFD700;
+            font-size: 18px;
+        }
+
+        .detail-label {
+            color: #6c757d;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        {% if request.GET.source == 'admin' %}
+        <a href="/admin-explore/" class="btn btn-outline-secondary">
+            ← Back to Admin Explore
+        </a>
+        {% else %}
+        <a href="/explore/" class="btn btn-outline-secondary">
+            ← Back to Explore
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-lg border-0 card-custom">
+
+        <!-- IMAGE -->
+        {% if event.image_url %}
+            <img src="/media/{{ event.image_url }}" class="hero-img" onerror="this.src='https://picsum.photos/1200/500?random={{ event.event_id }}'">
+        {% else %}
+            <img src="https://picsum.photos/1200/500?random={{ event.event_id }}" class="hero-img">
+        {% endif %}
+
+        <!-- CONTENT -->
+        <div class="card-body p-4 p-md-5">
+
+            <!-- TITLE + RATING + CORE VALUES -->
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+
+                <div>
+                    <h2 class="fw-bold mb-2">{{ event.event_name }}</h2>
+                    {% if event.event_date < today %}
+                        <div class="rating">⭐ {{ event.rating }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    {% for core in event.core_values.all %}
+                        <span class="badge-core">{{ core.core_value_name }}</span>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- INFO -->
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <div class="detail-label">Date</div>
+                        <div class="detail-value">📅 {{ event.event_date }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <div class="detail-label">Time</div>
+                        <div class="detail-value">⏰ {{ event.event_time }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <div class="detail-label">Location</div>
+                        <div class="detail-value">📍 {{ event.location }}</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="mb-4">
+                <h5 class="section-title">About Event</h5>
+                <p class="text-muted">{{ event.description }}</p>
+            </div>
+
+            <!-- BENEFITS -->
+            <div class="mb-4">
+                <h5 class="section-title">Benefits</h5>
+                <ul class="text-muted">
+                    <li>Insight langsung dari pembicara berpengalaman</li>
+                    <li>Diskusi interaktif dan studi kasus nyata</li>
+                    <li>Networking dengan peserta lain</li>
+                    <li>Pengalaman belajar yang aplikatif</li>
+                </ul>
+            </div>
+
+            <!-- TARGET -->
+            <div class="mb-4">
+                <h5 class="section-title">Recommended For</h5>
+                <ul class="text-muted">
+                    <li>Karyawan internal Pegadaian</li>
+                    <li>Tim digital & innovation</li>
+                    <li>Profesional yang ingin upgrade mindset</li>
+                    <li>Siapa saja yang tertarik budaya digital</li>
+                </ul>
+            </div>
+
+            <!-- CTA -->
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a href="/event/{{ event.event_id }}/register/" class="btn btn-success px-4">
+                    Daftar Event
+                </a>
+                {% if request.GET.source == 'admin' %}
+                <a href="/admin-explore/" class="btn btn-outline-secondary">
+                    Back to Admin
+                </a>
+                {% else %}
+                <a href="/explore/" class="btn btn-outline-secondary">
+                    Explore More
+                </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

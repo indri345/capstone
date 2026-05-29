@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Performance — Pegadaian</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --green-dark:  #014f28;
+            --green-mid:   #016632;
+            --green-base:  #00A651;
+            --green-light: #e6f5ed;
+            --green-pale:  #f0faf4;
+            --gold:        #c9a84c;
+            --text-dark:   #0d1f15;
+            --text-muted:  #6b8878;
+            --border:      #d4e6da;
+            --surface:     #ffffff;
+            --bg:          #f4f8f5;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-dark); min-height: 100vh; }
+
+        /* NAVBAR */
+        .navbar { background-color: #016632; position: sticky; top: 0; z-index: 1000; }
+        .navbar a { text-decoration: none !important; color: white; transition: 0.2s; }
+        .navbar a:hover { transform: translateY(-2px); }
+        .active-link { font-weight: 600; border-bottom: 2px solid white; }
+        .admin-btn { background: #ffc107; color: black !important; padding: 6px 15px; border-radius: 20px; font-weight: 600; margin-left: 10px; }
+        .brand-link { text-decoration: none !important; color: white; display: inline-flex; align-items: center; gap: 10px; }
+        .brand-logo { width: 28px; height: 28px; }
+        
+        /* PAGE TITLE */
+        .page-title-wrap { padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+        .page-eyebrow {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--green-light); border: 1px solid var(--border);
+            border-radius: 20px; padding: 4px 12px;
+            font-size: 11px; font-weight: 600; color: var(--green-mid);
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+        }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 36px; font-weight: 400; color: var(--text-dark); line-height: 1.2; }
+        .page-title em { font-style: italic; color: var(--green-base); }
+        .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 8px; font-weight: 300; max-width: 600px; line-height: 1.6; }
+
+
+        /* SECTION HEADING */
+        .section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .section-heading h5 { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; margin: 0; }
+        .section-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* DASHBOARD CARDS */
+        .dashboard-card { background: white; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; margin-bottom: 20px; transition: box-shadow 0.2s; }
+        .dashboard-card:hover { box-shadow: 0 8px 24px rgba(1,78,40,0.08); }
+        .dashboard-card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .dashboard-card-header h6 { font-weight: 600; font-size: 14px; margin: 0; color: var(--text-dark); }
+        .dashboard-badge { font-size: 11px; font-weight: 500; background: var(--green-pale); color: var(--green-mid); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+        .dashboard-card iframe { width: 100%; display: block; border: none; height: 380px; }
+
+        /* QUICK ACCESS */
+        .quick-card {
+            background: white; border: 1px solid var(--border); border-radius: 18px;
+            padding: 22px 20px; text-decoration: none; color: var(--text-dark);
+            display: flex; align-items: center; gap: 14px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative; overflow: hidden; height: 100%;
+        }
+        .quick-card::before {
+            content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+            background: linear-gradient(180deg, var(--green-base), var(--gold));
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .quick-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(1,78,40,0.10); border-color: var(--green-base); color: var(--text-dark); }
+        .quick-card:hover::before { opacity: 1; }
+        .quick-icon { width: 42px; height: 42px; background: var(--green-pale); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .quick-label { font-weight: 600; font-size: 13px; line-height: 1.4; }
+        .quick-arrow { margin-left: auto; color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
+
+        /* FOOTER */
+        .footer-custom { background: var(--green-dark); color: rgba(255,255,255,0.7); padding: 28px 0; margin-top: 60px; font-size: 13px; }
+        .footer-custom a { color: var(--gold); text-decoration: none; }
+
+        /* FEEDBACK BTN */
+        .feedback-btn {
+            position: fixed; bottom: 24px; right: 24px;
+            background: white; color: var(--green-mid);
+            font-size: 20px; width: 50px; height: 50px;
+            border-radius: 50%; text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .feedback-btn:hover { transform: scale(1.1); box-shadow: 0 8px 24px rgba(0,0,0,0.16); }
+
+        /* REVEAL */
+        .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+        .reveal.in { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-dark">
+    <div class="container d-flex align-items-center">
+        <a href="/" class="navbar-brand">
+            <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
+            Digital Culture
+        </a>
+        <div class="d-flex align-items-center ms-auto gap-3">
+            <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
+            <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
+            <a href="/culture_performance/" class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>
+            <a href="/business_performance/" class="{% if request.path == '/business_performance/' %}active-link{% endif %}">Business</a>
+            <a href="/admin-home/" class="admin-btn">Login</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- PAGE TITLE -->
+    <div class="page-title-wrap reveal">
+        <div class="page-eyebrow">📈 Dashboard</div>
+        <h1 class="page-title">Business <em>Performance</em></h1>
+        <p class="page-subtitle">Monitor pencapaian, performa operasional, serta indikator strategis perusahaan Pegadaian secara menyeluruh.</p>
+    </div>
+
+    <!-- DASHBOARDS -->
+    <div class="section-heading reveal">
+        <h5>Dashboard Utama</h5>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Dashboard Pegadaian Digital — Pencapaian Kanwil</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src=""></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Dashboard Micro Risk Assessment</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID_2"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Dashboard KUR Syariah</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID_3"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Dashboard Data Quality</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID_4"></iframe>
+    </div>
+
+    <!-- QUICK ACCESS -->
+    <div class="section-heading reveal" style="margin-top: 44px;">
+        <h5>Quick Access</h5>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="row g-3 reveal mb-5">
+        <div class="col-md-4">
+            <a href="https://lookerstudio.google.com/reporting/ID1" target="_blank" class="quick-card">
+                <div class="quick-icon">📋</div>
+                <div class="quick-label">Data Consent</div>
+                <div class="quick-arrow">↗</div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="https://lookerstudio.google.com/reporting/ID2" target="_blank" class="quick-card">
+                <div class="quick-icon">🥇</div>
+                <div class="quick-label">Kinerja Produk Emas</div> 
+                <div class="quick-arrow">↗</div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="https://lookerstudio.google.com/reporting/ID3" target="_blank" class="quick-card">
+                <div class="quick-icon">🎯</div>
+                <div class="quick-label">KPI Korporat</div>
+                <div class="quick-arrow">↗</div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="https://lookerstudio.google.com/reporting/ID4" target="_blank" class="quick-card">
+                <div class="quick-icon">🏦</div>
+                <div class="quick-label">Rekening Simpedes UMI</div>
+                <div class="quick-arrow">↗</div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="https://lookerstudio.google.com/reporting/ID5" target="_blank" class="quick-card">
+                <div class="quick-icon">📱</div>
+                <div class="quick-label">Self Experience Pegadaian Digital</div>
+                <div class="quick-arrow">↗</div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer-custom text-center">
+    <div class="container">
+        <p>Gade Tower · Pegadaian Kantor Pusat</p>
+        <p>Email: <a href="mailto:budaya.kerja.pusat@pegadaian.co.id">budaya.kerja.pusat@pegadaian.co.id</a></p>
+        <small style="opacity:.5;">© 2026 Pegadaian Digital Culture</small>
+    </div>
+</footer>
+
+<a href="/feedback/" class="feedback-btn">💬</a>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((e, i) => {
+            if (e.isIntersecting) setTimeout(() => e.target.classList.add('in'), i * 80);
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
