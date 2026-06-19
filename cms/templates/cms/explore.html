@@ -1,0 +1,842 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Explore</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Poppins'; background: #F4F6F9; }
+
+        .navbar {
+            background: #016632;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding-top: 14px;
+            padding-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar a {
+            text-decoration: none !important;
+            color: rgba(255,255,255,0.85);
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-weight: 400;
+        }
+
+        .navbar a:hover {
+            transform: translateY(-1px);
+            color: #ffc107 !important;
+        }
+
+        .brand-link { text-decoration: none !important; color: white; display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+        .brand-logo { width: 32px; height: 32px; transition: transform 0.3s; }
+        .brand-link:hover .brand-logo { transform: rotate(10deg) scale(1.05); }
+
+        .admin-btn { background: #ffc107; color: #111 !important; padding: 6px 24px; border-radius: 20px; font-weight: 600; margin-left: 5px; text-align: center; box-shadow: 0 4px 10px rgba(255,193,7,0.3); }
+        .admin-btn:hover { background: #e0a800 !important; color: #111 !important; transform: translateY(-2px) !important; box-shadow: 0 6px 14px rgba(255,193,7,0.4); }
+
+        .active-link {
+            font-weight: 600;
+            border-bottom: 2px solid white;
+            padding-bottom: 2px;
+        }
+
+        @media (max-width: 767.98px) {
+            .navbar-collapse { background-color: #016632; padding: 15px 10px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; }
+            .nav-links-container { flex-direction: column; align-items: flex-start !important; gap: 15px !important; width: 100%; }
+            .admin-btn { margin-left: 0 !important; width: 100%; text-align: center; }
+            .active-link { border-bottom: none; border-left: 3px solid #ffc107; padding-left: 8px; padding-bottom: 0; }
+        }
+
+        .header { margin: 25px 0; }
+
+        /* TOP BAR */
+        .explore-topbar {
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            backdrop-filter: blur(8px);
+        }
+
+        .search-input {
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.08);
+            padding-left: 40px;
+        }
+
+        .search-wrap {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .filter-chip {
+            border-radius: 999px;
+            border: 1px solid rgba(1, 102, 50, 0.18);
+            color: #016632;
+            background: white;
+        }
+
+        .filter-chip.active {
+            background: #016632;
+            color: white;
+            border-color: #016632;
+        }
+
+        /* TABS */
+        .nav-tabs .nav-link {
+            border: none;
+            color: #555;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #016632;
+            border-bottom: 3px solid #016632;
+            background: transparent;
+        }
+
+        /* SCROLL */
+        .scroll-wrap {
+            position: relative;
+        }
+
+        .scroll-container {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+        }
+
+        .scroll-container::-webkit-scrollbar { height: 8px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 999px; }
+        .scroll-container::-webkit-scrollbar-track { background: transparent; }
+
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            z-index: 5;
+            transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+            opacity: 0.0;
+            pointer-events: none;
+        }
+
+        .scroll-wrap:hover .scroll-btn,
+        .scroll-wrap:focus-within .scroll-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.14);
+        }
+
+        .scroll-btn.left { left: -10px; }
+        .scroll-btn.right { right: -10px; }
+
+        /* CARD */
+        .card-custom {
+            flex: 0 0 300px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform .22s ease, box-shadow .22s ease;
+            display: flex;
+            flex-direction: column;
+            scroll-snap-align: start;
+            position: relative;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
+
+        .card-img {
+            height: 170px;
+            width: 100%;
+            object-fit: cover;
+            transition: transform .35s ease;
+        }
+
+        .card-custom:hover .card-img {
+            transform: scale(1.03);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.35);
+            z-index: 2;
+        }
+
+        .badge-upcoming { background: rgba(255, 215, 0, 0.92); color: #1b1b1b; }
+        .badge-past { background: rgba(25, 135, 84, 0.92); color: white; }
+
+        .card-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-body h6 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .card-body p {
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .rating {
+            color: #FFD700;
+            font-size: 13px;
+        }
+
+        .card-buttons {
+            margin-top: auto;
+            padding-top: 8px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            margin: 25px 0 10px;
+            font-weight: 600;
+        }
+
+        .badge-core-modal {
+            background: #016632;
+            color: white;
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* hide cards smoothly */
+        .card-custom.hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-md navbar-dark">
+    <div class="container-fluid px-4">
+        <a href="/" class="navbar-brand brand-link">
+            <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
+            <span>Digital Culture</span>
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="d-flex align-items-center ms-auto gap-3 nav-links-container">
+                <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
+                <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
+                <a href="/culture_performance/" class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>
+                <a href="/business_performance/" class="{% if request.path == '/business_performance/' %}active-link{% endif %}">Business</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h3>Explore</h3>
+        <p>Temukan berbagai konten budaya perusahaan.</p>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="explore-topbar mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-7">
+                <div class="search-wrap">
+                    <span class="search-icon">⌕</span>
+                    <input id="exploreSearch" type="search" class="form-control search-input" placeholder="Cari event / news / playbook..." autocomplete="off">
+                </div>
+                <div class="small text-muted mt-1" id="exploreResultHint"></div>
+            </div>
+            <div class="col-md-5 d-flex gap-2 justify-content-md-end flex-wrap">
+                <button type="button" class="btn btn-sm filter-chip active" data-filter="all">All</button>
+                <button type="button" class="btn btn-sm filter-chip" data-filter="upcoming">Upcoming</button>
+                <button type="button" class="btn btn-sm filter-chip" data-filter="past">Past</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="exploreClearBtn">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4" id="exploreTabs">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#events">Events</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#news">News</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#attributes">Attributes</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+<!-- ================= EVENTS ================= -->
+<div class="tab-pane fade show active" id="events">
+
+    <div class="scroll-wrap">
+
+        <button class="scroll-btn left" type="button" data-scroll="left">‹</button>
+        <button class="scroll-btn right" type="button" data-scroll="right">›</button>
+
+        <div class="scroll-container" id="eventsScroller">
+
+            {% for event in events %}
+
+            <div class="card-custom"
+                 data-date="{{ event.event_date|date:'Y-m-d' }}"
+                 data-title="{{ event.event_name }}"
+                 data-location="{{ event.location }}"
+                 data-rating="{{ event.rating }}"
+                 data-image="{% if event.image_url %}/media/{{ event.image_url }}{% endif %}">
+
+                <!-- IMAGE -->
+                <img
+                    src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
+                    class="card-img"
+                    onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+
+                <!-- BODY -->
+                <div class="card-body">
+
+                    <h6>{{ event.event_name }}</h6>
+
+                    <p class="text-muted">{{ event.location }}</p>
+                    <p class="text-muted">{{ event.event_date }}</p>
+                    <p class="text-muted">{{ event.event_time }}</p>
+
+                    <!-- RATING -->
+                    {% if event.event_date < today %}
+
+                        {% if event.rating %}
+
+                            <p class="rating">
+                                ⭐ {{ event.rating }}
+                            </p>
+
+                        {% else %}
+
+                            <p class="text-muted small">
+                                Belum ada rating
+                            </p>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                    <!-- BUTTONS -->
+                    <div class="card-buttons">
+
+                        <!-- DETAIL -->
+                        <button
+                            type="button"
+                            class="btn btn-success btn-sm btn-popup-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#detailModal"
+                            data-url="/event_detail/{{ event.event_id }}/"
+                            data-event-title="{{ event.event_name }}"
+                            data-event-location="{{ event.location }}"
+                            data-event-date="{{ event.event_date|date:'Y-m-d' }}"
+                            data-event-time="{{ event.event_time }}"
+                            data-event-rating="{{ event.rating }}"
+                            data-event-image="{% if event.image_url %}/media/{{ event.image_url }}{% endif %}"
+                            data-event-cores="{% for core in event.core_values.all %}{{ core.core_value_name }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                            Detail
+                        </button>
+
+                        <!-- FEEDBACK -->
+                        {% if event.event_date < today %}
+
+                            {% if event.event_id in rated_events %}
+
+                                <button class="btn btn-secondary btn-sm" disabled>
+                                    Sudah Rating
+                                </button>
+
+                            {% else %}
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    onclick="openFeedbackForEvent('{{ event.event_id }}')">
+                                    Feedback
+                                </button>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+       <!-- ================= NEWS ================= -->
+<div class="tab-pane fade" id="news">
+
+    {% for edition in news_editions %}
+
+    <div class="section-title">{{ edition.edition_name }}</div>
+
+    <div class="scroll-wrap">
+        <button class="scroll-btn left" type="button" data-scroll="left">‹</button>
+        <button class="scroll-btn right" type="button" data-scroll="right">›</button>
+
+        <div class="scroll-container">
+            {% for news in edition.news.all %}
+
+            <div class="card-custom">
+                <img src="{% if news.image_url %}{{ news.image_url }}{% else %}https://picsum.photos/400/300?random={{ news.news_id }}{% endif %}"
+                     class="card-img"
+                     data-gdrive="{% if news.image_url %}{{ news.image_url }}{% endif %}"
+                     onerror="this.src='https://picsum.photos/400/300?random={{ news.news_id }}'">
+
+                <div class="card-body">
+                    <h6>{{ news.title }}</h6>
+                    <p class="text-muted">{{ news.created_at|date:"d M Y" }}</p>
+                    <div class="card-buttons">
+                        {% if news.image_url %}
+                        <a href="{% url 'redirect_news' news.news_id %}" class="btn btn-outline-success btn-sm" target="_blank">
+                            Buka Poster
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+    </div>
+
+    {% endfor %}
+
+<!-- /tab-pane#news -->
+
+        <!-- ================= ATTRIBUTES ================= -->
+        <div class="tab-pane fade" id="attributes">
+
+           <!-- PLAYBOOK -->
+{% if playbooks %}
+<div class="section-title">Playbook</div>
+<div class="scroll-wrap">
+    <button class="scroll-btn left" type="button" data-scroll="left">‹</button>
+    <button class="scroll-btn right" type="button" data-scroll="right">›</button>
+    <div class="scroll-container">
+        {% for item in playbooks %}
+        <div class="card-custom">
+            <div style="height:170px; overflow:hidden; position:relative; background:#f0f0f0;">
+                <iframe
+                    src="{{ item.file_url }}"
+                    style="width:100%; height:340px; border:none; transform:scale(0.5); transform-origin:top left; pointer-events:none;"
+                    loading="lazy"
+                    scrolling="no">
+                </iframe>
+                <!-- overlay agar tidak bisa diklik langsung -->
+                <div style="position:absolute; inset:0;"></div>
+            </div>
+            <div class="card-body">
+                <h6>{{ item.attribute_name }}</h6>
+                <p class="text-muted">{{ item.created_at|date:"d M Y" }}</p>
+                <div class="card-buttons">
+                    <a href="{{ item.file_url }}" class="btn btn-success btn-sm" target="_blank">Baca</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+            <!-- POSTER -->
+{% if posters %}
+<div class="section-title">Poster</div>
+<div class="scroll-wrap">
+    <button class="scroll-btn left" type="button" data-scroll="left">‹</button>
+    <button class="scroll-btn right" type="button" data-scroll="right">›</button>
+    <div class="scroll-container">
+        {% for item in posters %}
+        <div class="card-custom">
+            <img src="https://picsum.photos/400/300?{{ item.attribute_id }}"
+                 data-gdrive="{{ item.file_url }}"
+                 class="card-img" alt="{{ item.attribute_name }}"
+                 onerror="this.src='https://picsum.photos/400/300?{{ item.attribute_id }}'">
+            <div class="card-body">
+                <h6>{{ item.attribute_name }}</h6>
+                <p class="text-muted">{{ item.created_at|date:"d M Y" }}</p>
+                <div class="card-buttons">
+                    <a href="{{ item.file_url }}" class="btn btn-success btn-sm" target="_blank">Lihat Poster</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+            <!-- ASSET + LOGO + VIDEO -->
+{% if assets or logos or videos %}
+<div class="section-title">Asset, Logo & Video</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 24px;">
+
+    {% for item in assets %}
+    <a href="{{ item.file_url }}" target="_blank"
+       class="btn btn-sm"
+       style="background:#016632; color:white; border-radius:8px; padding: 12px 16px; text-align:center; white-space:normal; line-height:1.3;">
+        {{ item.attribute_name }}
+    </a>
+    {% endfor %}
+
+    {% for item in logos %}
+    <a href="{{ item.file_url }}" target="_blank"
+       class="btn btn-sm"
+       style="background:#016632; color:white; border-radius:8px; padding: 12px 16px; text-align:center; white-space:normal; line-height:1.3;">
+        {{ item.attribute_name }}
+    </a>
+    {% endfor %}
+
+    {% for item in videos %}
+    <a href="{{ item.file_url }}" target="_blank"
+       class="btn btn-sm"
+       style="background:#016632; color:white; border-radius:8px; padding: 12px 16px; text-align:center; white-space:normal; line-height:1.3;">
+        {{ item.attribute_name }}
+    </a>
+    {% endfor %}
+
+</div>
+{% endif %}
+
+            {% if not playbooks and not posters and not assets and not logos and not videos %}
+            <p class="text-muted mt-3">Belum ada attribute tersedia.</p>
+            {% endif %}
+
+        </div><!-- /tab-pane#attributes -->
+
+    </div><!-- /tab-content -->
+</div><!-- /container -->
+
+
+<!-- ===================== MODAL DETAIL ===================== -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="detailModalTitle">Detail Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="small text-muted">Lokasi</div>
+                        <div id="detailModalLocation" class="fw-semibold">-</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted">Tanggal</div>
+                        <div id="detailModalDate" class="fw-semibold">-</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted">Waktu</div>
+                        <div id="detailModalTime" class="fw-semibold">-</div>
+                    </div>
+                </div>
+
+                <div class="mt-3" id="detailModalCoresBox">
+                    <div class="small text-muted mb-1">Core Values</div>
+                    <div id="detailModalCores" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="mt-3">
+                    <div class="small text-muted">Rating</div>
+                    <div id="detailModalRating" class="rating fw-semibold">-</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <a id="detailModalFullLink" href="#" class="btn btn-outline-success">
+                    Lihat Detail
+                </a>
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- FEEDBACK WIDGET -->
+{% include 'cms/feedback.html' %}
+
+<!-- ===================== SCRIPTS ===================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ─── HELPERS ─────────────────────────────────── */
+    function normalize(s) { return (s || "").toLowerCase().trim(); }
+
+    function isPast(dateStr) {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const eventDate = new Date(y, m - 1, d);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return eventDate < today;
+    }
+
+    /* ─── BADGE + FEEDBACK BUTTON ─────────────────── */
+    function initEventCards() {
+        document.querySelectorAll("#events .card-custom[data-date]").forEach(card => {
+            const past = isPast(card.getAttribute("data-date"));
+
+            // Badge
+            if (!card.querySelector(".card-badge")) {
+                const badge = document.createElement("div");
+                badge.className = "card-badge " + (past ? "badge-past" : "badge-upcoming");
+                badge.textContent = past ? "Past" : "Upcoming";
+                card.prepend(badge);
+            }
+
+            // Feedback button — show only for past events
+            const fb = card.querySelector(".feedback-btn");
+            if (fb) fb.style.display = past ? "inline-block" : "none";
+        });
+    }
+
+    /* ─── FILTER & SEARCH ─────────────────────────── */
+    const searchEl  = document.getElementById("exploreSearch");
+    const hintEl    = document.getElementById("exploreResultHint");
+    const clearBtn  = document.getElementById("exploreClearBtn");
+    const chips     = Array.from(document.querySelectorAll(".filter-chip"));
+    let currentFilter = "all";
+
+    function getActiveTabId() {
+        const active = document.querySelector('#exploreTabs .nav-link.active');
+        return active ? active.getAttribute("data-bs-target").replace("#", "") : "events";
+    }
+
+    function applyFilters() {
+        const tabId = getActiveTabId();
+        const pane  = document.getElementById(tabId);
+        if (!pane) return;
+
+        const q = normalize(searchEl.value);
+        const cards = Array.from(pane.querySelectorAll(".card-custom"));
+        let visible = 0;
+
+        cards.forEach(card => {
+            const text = normalize(card.textContent);
+            const matchesQuery = !q || text.includes(q);
+
+            let matchesChip = true;
+            if (tabId === "events" && currentFilter !== "all") {
+                const past = isPast(card.getAttribute("data-date"));
+                matchesChip = currentFilter === "past" ? past === true : past === false;
+            }
+
+            const show = matchesQuery && matchesChip;
+            card.classList.toggle("hidden", !show);
+            if (show) visible++;
+        });
+
+        const label = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+        hintEl.textContent = q
+            ? `${visible} hasil di ${label} untuk "${searchEl.value}"`
+            : `${visible} item di ${label}`;
+    }
+
+    searchEl.addEventListener("input", applyFilters);
+
+    clearBtn.addEventListener("click", () => {
+        searchEl.value = "";
+        applyFilters();
+        searchEl.focus();
+    });
+
+    chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            chips.forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            currentFilter = chip.getAttribute("data-filter") || "all";
+            applyFilters();
+        });
+    });
+
+    // Re-apply when switching tabs
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => {
+        btn.addEventListener("shown.bs.tab", applyFilters);
+    });
+
+    /* ─── SCROLL BUTTONS ──────────────────────────── */
+    document.querySelectorAll(".scroll-wrap").forEach(wrap => {
+        const scroller = wrap.querySelector(".scroll-container");
+        if (!scroller) return;
+        wrap.querySelectorAll(".scroll-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const delta = btn.getAttribute("data-scroll") === "left" ? -320 : 320;
+                scroller.scrollBy({ left: delta, behavior: "smooth" });
+            });
+        });
+    });
+
+    /* ─── MODAL DETAIL ────────────────────────────── */
+    const modalEl           = document.getElementById("detailModal");
+    const modalTitle        = document.getElementById("detailModalTitle");
+    const modalLocation     = document.getElementById("detailModalLocation");
+    const modalDate         = document.getElementById("detailModalDate");
+    const modalTime         = document.getElementById("detailModalTime");
+    const modalRating       = document.getElementById("detailModalRating");
+    const modalFullLink     = document.getElementById("detailModalFullLink");
+    const modalCores        = document.getElementById("detailModalCores");
+    const modalCoresBox     = document.getElementById("detailModalCoresBox");
+
+    modalEl.addEventListener("show.bs.modal", function (e) {
+        const trigger = e.relatedTarget;
+        if (!trigger) return;
+
+        const url      = trigger.getAttribute("data-url")            || "#";
+        const title    = trigger.getAttribute("data-event-title")    || "Detail";
+        const location = trigger.getAttribute("data-event-location") || "-";
+        const dateStr  = trigger.getAttribute("data-event-date")     || "-";
+        const time     = trigger.getAttribute("data-event-time")     || "-";
+        const rating   = trigger.getAttribute("data-event-rating")   || "-";
+        const cores    = trigger.getAttribute("data-event-cores")    || "";
+
+        // Format tanggal jadi lebih readable
+        let displayDate = dateStr;
+        if (dateStr && dateStr.includes("-")) {
+            const [y, m, d] = dateStr.split("-");
+            const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+            displayDate = `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+        }
+
+        modalTitle.textContent    = title;
+        modalLocation.textContent = location;
+        modalDate.textContent     = displayDate;
+        modalTime.textContent     = time;
+
+        // Core values badges
+        modalCores.innerHTML = "";
+        if (cores) {
+            cores.split(",").forEach(c => {
+                const span = document.createElement("span");
+                span.className = "badge-core-modal";
+                span.textContent = c.trim();
+                modalCores.appendChild(span);
+            });
+            modalCoresBox.style.display = "";
+        } else {
+            modalCoresBox.style.display = "none";
+        }
+
+        // Link ke halaman detail — langsung dari Django url tag
+        console.log("data-url:", url);
+        modalFullLink.href = url;
+
+        // Rating hanya tampil kalau event sudah lewat
+        const ratingBox = modalRating.closest(".mt-3");
+        if (isPast(dateStr)) {
+            ratingBox.style.display = "";
+            modalRating.textContent = `⭐ ${rating}`;
+        } else {
+            ratingBox.style.display = "none";
+        }
+    });
+
+    /* ─── INIT ────────────────────────────────────── */
+    initEventCards();
+    applyFilters();
+    convertGDriveImages();
+
+    /* ─── OPEN FEEDBACK WIDGET FOR SPECIFIC EVENT ─── */
+    window.openFeedbackForEvent = function(eventId) {
+        // Update URL query param agar feedback.html bisa membaca event_id
+        const url = new URL(window.location.href);
+        url.searchParams.set('event_id', eventId);
+        window.history.replaceState({}, '', url);
+        // Kirim eventId langsung ke toggleChatWidget agar rating muncul untuk event yang benar
+        if (typeof toggleChatWidget === 'function') toggleChatWidget(eventId);
+    };
+
+    /* ─── GDRIVE IMAGE CONVERTER ──────────────────── */
+function convertGDriveImages() {
+    document.querySelectorAll("img[data-gdrive]").forEach(img => {
+        const url = img.getAttribute("data-gdrive");
+        if (!url) return;
+
+        let fileId = null;
+
+        // Format: /file/d/FILE_ID/view
+        const m1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (m1) fileId = m1[1];
+
+        // Format: ?id=FILE_ID
+        const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (!fileId && m2) fileId = m2[1];
+
+        if (fileId) {
+            img.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+        }
+    });
+}
+});
+</script>
+
+</body>
+</html>

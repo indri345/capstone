@@ -1,0 +1,427 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #F4F6F8; scroll-behavior: smooth; color: #333; }
+
+        /* NAVBAR CSS */
+        .navbar { background-color: #016632; position: sticky; top: 0; z-index: 1000; padding-top: 14px; padding-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar a { text-decoration: none !important; color: rgba(255,255,255,0.85); transition: all 0.3s ease; display: inline-block; font-weight: 400; }
+        .navbar a:hover { transform: translateY(-1px); color: #ffc107 !important; }
+        .active-link { font-weight: 600 !important; color: white !important; border-bottom: 2px solid #ffc107; padding-bottom: 2px; }
+        .admin-btn { background: #ffc107; color: #111 !important; padding: 6px 24px; border-radius: 20px; font-weight: 600; margin-left: 5px; text-align: center; box-shadow: 0 4px 10px rgba(255,193,7,0.3); }
+        .admin-btn:hover { background: #e0a800 !important; color: #111 !important; transform: translateY(-2px) !important; box-shadow: 0 6px 14px rgba(255,193,7,0.4); }
+        .brand-link { text-decoration: none !important; color: white; display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+        .brand-logo { width: 32px; height: 32px; transition: transform 0.3s; }
+        .brand-link:hover .brand-logo { transform: rotate(10px) scale(1.05); }
+
+        @media (max-width: 767.98px) {
+            .navbar-collapse { background-color: #016632; padding: 15px 10px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; }
+            .nav-links-container { flex-direction: column; align-items: flex-start !important; gap: 15px !important; width: 100%; }
+            .admin-btn { margin-left: 0 !important; width: 100%; text-align: center; }
+            .active-link { border-bottom: none; border-left: 3px solid #ffc107; padding-left: 8px; padding-bottom: 0; }
+        }
+
+        /* HERO SPLASH SLIDER */
+        .splash-slide {
+            height: 60vh; min-height: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: linear-gradient(135deg, #016632, #00A651);
+            color: white; text-align: center; border-radius: 20px; padding: 40px;
+            box-shadow: 0 10px 30px rgba(1,102,50,0.15); position: relative; overflow: hidden;
+        }
+        .splash-slide::before {
+            content: ''; position: absolute; width: 300px; height: 300px; background: rgba(255,255,255,0.05); border-radius: 50%; top: -100px; right: -100px;
+        }
+        #splashCarousel.carousel-fade .carousel-item { transition: opacity 800ms ease-in-out; }
+
+        .section-title { margin-top: 60px; font-weight: 700; text-align: center; color: #016632; position: relative; padding-bottom: 12px; }
+        .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: 4px; background: #ffc107; border-radius: 2px; }
+
+        /* CORE VALUE CARDS (Tetap hijau, shadow putih saat diklik) */
+        .category-card {
+            padding: 25px 15px; border-radius: 16px; background: #016632; color: white; font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 2px solid transparent;
+            box-shadow: 0 6px 20px rgba(1,102,50,0.15); position: relative; overflow: hidden;
+        }
+        .category-card:hover { background: #00A651; color: white; transform: translateY(-4px); box-shadow: 0 10px 24px rgba(1,102,50,0.25); }
+        
+        /* Shadow putih bercahaya saat tombol aktif/fokus diklik */
+        .category-card:active, .category-card:focus { 
+            outline: none;
+            background: #016632;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: scale(0.97);
+        }
+
+        /* QUICK STATS */
+        .stats-wrap {
+            margin-top: 50px; position: relative; z-index: 10; background: white;
+            border: 1px solid rgba(0,0,0,0.05); border-radius: 24px; padding: 28px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+        }
+        .stat-card {
+            background: #F8F9FA; border: 1px solid rgba(0,0,0,0.03); border-radius: 16px;
+            padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+            transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; justify-content: center;
+        }
+        .stat-card:hover { background: white; transform: translateY(-4px); box-shadow: 0 10px 22px rgba(0,0,0,0.06); border-color: rgba(1,102,50,0.15); }
+        .stat-number { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; color: #016632; }
+        .stat-label { color: #6c757d; font-size: 13px; margin-top: 4px; font-weight: 500; }
+
+        /* ANIMATION REVEAL */
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(0.16, 1, 0.3, 1), transform .8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.in { opacity: 1; transform: translateY(0); }
+
+        /* CONTENT MODAL CARD */
+        .content-card {
+            background: white; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px;
+            overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            transition: all 0.3s ease; height: 100%;
+        }
+        .content-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
+        .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(1,102,50,0.1); color: #016632; }
+
+        /* FOOTER */
+        .footer-custom { background: #014020; color: rgba(255,255,255,0.8); padding: 40px 0 30px; margin-top: 80px; font-size: 14px; }
+        .footer-custom small { color: rgba(255,255,255,0.5); }
+
+        /* CHAT WIDGET TRIGGER CSS */
+        .chat-widget-trigger {
+            position: fixed; bottom: 24px; right: 24px; z-index: 999;
+            background-color: #ffc107; color: white;
+            width: 56px; height: 56px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: none;
+            box-shadow: 0 4px 16px rgba(255,193,7,0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .chat-widget-trigger:hover { transform: scale(1.1) rotate(8deg); background-color: #e0a800; box-shadow: 0 6px 20px rgba(255,193,7,0.5); }
+        .chat-widget-trigger:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-md navbar-dark">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand brand-link" href="{% url 'home' %}">
+            <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
+            <span>Digital Culture</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="d-flex align-items-center ms-auto gap-3 nav-links-container">
+                <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
+                <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
+                <a href="/culture_performance/" class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>
+                <a href="/business_performance/" class="{% if request.path == '/business_performance/' %}active-link{% endif %}">Business</a>
+                <a href="/admin-home/" class="admin-btn">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <!-- SPLASH SLIDER (Tanpa indikator titik-titik di bawahnya) -->
+    <div id="splashCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
+            {% for event in recommended_events %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="splash-slide">
+                    <h1 class="display-5 fw-bold mb-3">{{ event.event_name }}</h1>
+                    <p class="lead max-width-600 px-3">{{ event.description|truncatewords:20 }}</p>
+                    <div class="mt-4">
+                        <a href="/event_detail/{{ event.event_id }}/" class="btn btn-warning px-4 py-2 fw-semibold shadow-sm">Explore Event</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="carousel-item active">
+                <div class="splash-slide">
+                    <h1 class="display-5 fw-bold mb-2">Selamat Datang</h1>
+                    <p class="lead">Platform Digital Culture Pegadaian</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#splashCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#splashCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div id="stats" class="stats-wrap reveal">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h5 class="mb-1 fw-bold text-success-dark">Quick Stats</h5>
+                <div class="text-muted small">Ringkasan aktivitas & budaya digital perusahaan.</div>
+            </div>
+            <a href="/explore/" class="btn btn-sm btn-outline-success px-3 rounded-pill">Lihat di Explore</a>
+        </div>
+        <div class="row g-3 mt-2">
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number" data-count="{{ total_events }}">0</div>
+                    <div class="stat-label">Events</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number" data-count="{{ total_news }}">0</div>
+                    <div class="stat-label">News & Update</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number" data-count="{{ total_attributes }}">0</div>
+                    <div class="stat-label">Assets / Playbook</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number" data-count="{{ engagement_score }}">0</div>
+                    <div class="stat-label">Engagement Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE VALUES -->
+    <h3 id="core-values" class="section-title reveal">Core Values</h3>
+    <div class="row text-center mt-4 g-3 justify-content-center reveal">
+        <div class="col-6 col-md-4 col-lg-2.5">
+            <button class="category-card w-100 h-100" data-bs-toggle="modal" data-bs-target="#recommendedModal"
+                data-core-slug="integrity" data-core-name="Integrity">Integrity</button>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2.5">
+            <button class="category-card w-100 h-100" data-bs-toggle="modal" data-bs-target="#recommendedModal"
+                data-core-slug="collaborative" data-core-name="Collaborative">Collaborative</button>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2.5">
+            <button class="category-card w-100 h-100" data-bs-toggle="modal" data-bs-target="#recommendedModal"
+                data-core-slug="accountability" data-core-name="Accountability">Accountability</button>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2.5">
+            <button class="category-card w-100 h-100" data-bs-toggle="modal" data-bs-target="#recommendedModal"
+                data-core-slug="growth-mindset" data-core-name="Growth Mindset">Growth Mindset</button>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2.5">
+            <button class="category-card w-100 h-100" data-bs-toggle="modal" data-bs-target="#recommendedModal"
+                data-core-slug="customer-focus" data-core-name="Customer Focus">Customer Focus</button>
+        </div>
+    </div>
+
+    <!-- MODAL RECOMMENDED -->
+    <div class="modal fade" id="recommendedModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border-radius:20px; overflow:hidden; border:none; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header px-4 py-3" style="background:#016632; color:white; border-bottom: none;">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="recommendedModalTitle">Recommended</h5>
+                        <div class="small" id="recommendedModalSubtitle" style="opacity:.85;"></div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <div class="small text-muted mb-1 uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 11px;">Makna Perilaku</div>
+                        <div id="recommendedMeaning" class="fs-6 text-dark" style="line-height: 1.6;">-</div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="small text-muted mb-2 uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 11px;">Contoh Aktivitas Utama</div>
+                        <ul id="recommendedExamples" class="ps-3 mb-0" style="line-height: 1.8;"></ul>
+                    </div>
+                    <hr class="my-4" style="opacity: 0.1;"/>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <div class="fw-bold text-success-dark">Event Rekomendasi Terkait</div>
+                    </div>
+                    <div id="recommendedLoading" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                        <span class="text-muted small ms-2">Memuat konten...</span>
+                    </div>
+                    <div id="recommendedGrid" class="row g-3"></div>
+                    <div id="recommendedEmpty" class="alert alert-light border text-center py-4 mt-2" style="display:none; border-radius: 12px;">
+                         Belum ada rekomendasi event aktif untuk core value ini.
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3" style="background: #f8f9fa; border-top: none;">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer-custom text-center">
+    <div class="container">
+        <p class="mb-1 fw-semibold">Gade Tower - Pegadaian Kantor Pusat</p>
+        <p class="mb-3">Email: budaya.kerja.pusat@pegadaian.co.id</p>
+        <small>© 2026 Pegadaian Digital Culture. All Rights Reserved.</small>
+    </div>
+</footer>
+
+<!-- FLOATING CHAT WIDGET TRIGGER (disediakan oleh feedback.html) -->
+
+<!-- INCLUDE EXT PANEL/MODAL FEEDBACK -->
+{% include 'cms/feedback.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Scroll reveal animation
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => { 
+            if (e.isIntersecting) {
+                e.target.classList.add("in"); 
+                io.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+    // Counter animation
+    const statWrap = document.getElementById("stats");
+    const counters = Array.from(document.querySelectorAll(".stat-number"));
+    let countersStarted = false;
+
+    function animateCount(el, to) {
+        const dur = 1200; 
+        const start = performance.now();
+        function tick(t) {
+            const p = Math.min(1, (t - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 4);
+            el.textContent = Math.round(to * eased).toLocaleString('id-ID');
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    const ioStats = new IntersectionObserver((entries) => {
+        if (!entries.some(e => e.isIntersecting) || countersStarted) return;
+        countersStarted = true;
+        counters.forEach((el) => animateCount(el, Number(el.getAttribute("data-count") || "0")));
+    }, { threshold: 0.2 });
+    
+    if (statWrap) ioStats.observe(statWrap);
+
+    // Static Data for Core Values
+    const valueData = {
+        "Integrity": {
+            meaning: "Konsisten jujur, dapat dipercaya, dan memegang komitmen meski tidak diawasi.",
+            examples: ["Transparan saat menyampaikan progress & risiko.", "Menjaga kerahasiaan data dan informasi internal perusahaan.", "Berani mengatakan 'tidak' untuk hal yang menyimpang dari regulasi."]
+        },
+        "Collaborative": {
+            meaning: "Bekerja bersama lintas fungsi/tim untuk hasil terbaik, saling mendukung, serta terbuka terhadap ide-ide baru.",
+            examples: ["Aktif meminta/memberi bantuan saat menghadapi kendala teknis.", "Menyelaraskan tujuan & ekspektasi bersama sebelum memulai eksekusi.", "Berbagi pengetahuan melalui program sharing session secara periodik."]
+        },
+        "Accountability": {
+            meaning: "Bertanggung jawab penuh atas setiap keputusan, tindakan, dan hasil kerja dengan fokus pada solusi.",
+            examples: ["Memiliki ownership yang jelas untuk setiap tugas yang didelegasikan.", "Menyelesaikan pekerjaan secara tuntas (close the loop).", "Mengevaluasi kegagalan untuk perbaikan proses ke depan."]
+        },
+        "Growth Mindset": {
+            meaning: "Terbuka untuk terus belajar, adaptif terhadap perubahan teknologi, dan konstan meningkatkan kapabilitas diri.",
+            examples: ["Mengeksplorasi metode kerja baru yang divalidasi dengan basis data.", "Minta feedback berkala untuk iterasi pengembangan diri.", "Meningkatkan keterampilan digital selaras arah transformasi perusahaan."]
+        },
+        "Customer Focus": {
+            meaning: "Mengutamakan kebutuhan pelanggan internal maupun eksternal guna memberikan pengalaman layanan terbaik.",
+            examples: ["Merancang solusi berbasis kebutuhan riil pengguna, bukan asumsi subjektif.", "Mengembangkan purwarupa produk (prototype) secara cepat untuk diuji.", "Memastikan standar pelayanan berjalan responsif, ringkas, dan konsisten."]
+        }
+    };
+
+    // Modal DOM Handlers
+    const recModalEl      = document.getElementById("recommendedModal");
+    const recTitleEl      = document.getElementById("recommendedModalTitle");
+    const recSubtitleEl   = document.getElementById("recommendedModalSubtitle");
+    const recMeaningEl    = document.getElementById("recommendedMeaning");
+    const recExamplesEl   = document.getElementById("recommendedExamples");
+    const recLoadingEl    = document.getElementById("recommendedLoading");
+    const recGridEl       = document.getElementById("recommendedGrid");
+    const recEmptyEl      = document.getElementById("recommendedEmpty");
+
+    function renderRecommended(items) {
+        recGridEl.innerHTML = "";
+        if (!items || items.length === 0) {
+            recEmptyEl.style.display = "block";
+            return;
+        }
+        recEmptyEl.style.display = "none";
+        items.forEach((it) => {
+            const col = document.createElement("div");
+            col.className = "col-12 col-md-6";
+            col.innerHTML = `
+                <div class="content-card h-100">
+                    <div class="p-3 d-flex flex-column h-100 justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <span class="pill">${it.category || 'Event'}</span>
+                                <a class="btn btn-xs btn-outline-success px-2 py-1 rounded" style="font-size: 11px;" href="/event_detail/${it.id}/">Detail</a>
+                            </div>
+                            <h6 class="mt-2 mb-1 fw-bold text-dark">${it.title}</h6>
+                            <p class="text-muted small mb-2">${it.summary || ""}</p>
+                        </div>
+                        <div class="border-top pt-2 mt-2">
+                            ${it.event_date ? `<div class="text-muted" style="font-size:11px;">📅 ${it.event_date}</div>` : ""}
+                            ${it.location ? `<div class="text-muted" style="font-size:11px;">📍 ${it.location}</div>` : ""}
+                        </div>
+                    </div>
+                </div>
+            `;
+            recGridEl.appendChild(col);
+        });
+    }
+
+    recModalEl.addEventListener("show.bs.modal", async function (event) {
+        const trigger = event.relatedTarget;
+        const slug    = trigger?.getAttribute("data-core-slug") || "";
+        const name    = trigger?.getAttribute("data-core-name") || "Core Value";
+
+        recTitleEl.textContent    = name;
+        recSubtitleEl.textContent = "Panduan & agenda digitalisasi berbasis budaya kerja";
+
+        const copy = valueData[name] || { meaning: "-", examples: [] };
+        recMeaningEl.textContent = copy.meaning || "-";
+        recExamplesEl.innerHTML  = "";
+        
+        (copy.examples || []).forEach((ex) => {
+            const li = document.createElement("li");
+            li.textContent = ex;
+            recExamplesEl.appendChild(li);
+        });
+
+        recLoadingEl.style.display = "block";
+        recEmptyEl.style.display   = "none";
+        recGridEl.innerHTML        = "";
+
+        try {
+            const res  = await fetch(`/api/recommended/?core=${encodeURIComponent(slug)}`);
+            if(!res.ok) throw new Error("Network status error");
+            const data = await res.json();
+            renderRecommended(data.items || []);
+        } catch (e) {
+            console.error("Fetch error:", e);
+            renderRecommended([]);
+        } finally {
+            recLoadingEl.style.display = "none";
+        }
+    });
+});
+
+// toggleChatWidget() disediakan oleh feedback.html
+</script>
+</body>
+</html>

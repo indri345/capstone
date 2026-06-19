@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ action }}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body { margin:0; background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%); color:#1e293b; font-family:'Poppins',sans-serif; min-height: 100vh; }
+.container { width:90%; max-width:720px; margin:30px auto; }
+.card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.85); border-radius:16px; box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08); padding:28px; }
+
+h1 { margin-bottom:14px; font-size:24px; }
+
+label { display:block; margin-top:16px; font-size:14px; color:#334155; }
+
+input, textarea, select {
+    width:100%;
+    padding:12px 14px;
+    margin-top:8px;
+    border:1px solid #cbd5f5;
+    border-radius:12px;
+    font-size:14px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+textarea { min-height:120px; resize:vertical; }
+
+.button-row {
+    margin-top:24px;
+    display:flex;
+    gap:14px;
+}
+
+button {
+    border:none;
+    border-radius:12px;
+    padding:12px 18px;
+    font-size:14px;
+    cursor:pointer;
+}
+
+button.primary { background:#3b82f6; color:white; }
+button.secondary { background:#f1f5f9; color:#1f2937; }
+
+.nav { margin-bottom:18px; }
+.nav a { text-decoration:none; color:#3b82f6; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav">
+        <a href="{% url 'admin_explore' %}">← Kembali ke Explore Admin</a>
+    </div>
+
+    <div class="card">
+        <h1>{{ action }}</h1>
+
+        <form method="post"
+              action="{% if attribute %}{% url form_action attribute.attribute_id %}{% else %}{% url form_action %}{% endif %}">
+
+            {% csrf_token %}
+
+            <label>Judul Attribute</label>
+            <input name="attribute_name"
+                   value="{{ attribute.attribute_name|default_if_none:'' }}"
+                   required>
+
+            <label>Kategori (Type)</label>
+            <select name="attribute_type" required>
+                <option value="">-- Pilih Kategori --</option>
+                {% for code, name in attribute_types %}
+                    <option value="{{ code }}" {% if attribute.attribute_type == code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>PubHTML5 URL / Google Drive / External Link</label>
+            <input type="url" name="file_url"
+                value="{{ attribute.file_url|default_if_none:'' }}"
+                placeholder="https://..." required>
+
+            <div class="button-row">
+                <button type="submit" class="primary">Simpan</button>
+                <button type="button"
+                        class="secondary"
+                        onclick="window.location.href='{% url 'admin_explore' %}'">
+                    Batal
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

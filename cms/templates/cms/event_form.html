@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ action }}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body { margin:0; background:#f1f7ff; color:#1e293b; font-family:'Poppins',sans-serif; }
+.container { width:90%; max-width:720px; margin:30px auto; }
+.card { background:white; border-radius:16px; box-shadow:0 10px 40px rgba(59,130,246,0.12); padding:28px; }
+
+h1 { margin-bottom:14px; font-size:24px; }
+
+label { display:block; margin-top:16px; font-size:14px; color:#334155; }
+
+input, textarea {
+    width:100%;
+    padding:12px 14px;
+    margin-top:8px;
+    border:1px solid #cbd5f5;
+    border-radius:12px;
+    font-size:14px;
+}
+
+textarea { min-height:120px; resize:vertical; }
+
+.button-row {
+    margin-top:24px;
+    display:flex;
+    gap:14px;
+}
+
+button {
+    border:none;
+    border-radius:12px;
+    padding:12px 18px;
+    font-size:14px;
+    cursor:pointer;
+}
+
+button.primary { background:#3b82f6; color:white; }
+button.secondary { background:#f1f5f9; color:#1f2937; }
+
+.nav { margin-bottom:18px; }
+.nav a { text-decoration:none; color:#3b82f6; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="nav">
+        <a href="{% url 'admin_explore' %}">← Kembali ke Explore Admin</a>
+    </div>
+
+    <div class="card">
+        <h1>{{ action }}</h1>
+
+        <!-- PENTING: enctype untuk upload file -->
+        <form method="post"
+              enctype="multipart/form-data"
+              action="{% if event %}{% url form_action event.event_id %}{% else %}{% url form_action %}{% endif %}">
+
+            {% csrf_token %}
+
+            <!-- EVENT NAME -->
+            <label>Judul Event</label>
+            <input name="event_name"
+                   value="{{ event.event_name|default_if_none:'' }}"
+                   required>
+
+            <!-- ABOUT EVENT -->
+            <!-- DESCRIPTION -->
+            <label>About Event</label>
+            <textarea name="description"
+                    placeholder="Ceritakan detail event...">{{ event.description|default_if_none:'' }}</textarea>
+
+            <!-- LOCATION -->
+            <label>Location</label>
+            <input name="location"
+                value="{{ event.location|default_if_none:'' }}">
+
+            <!-- DATE -->
+            <label>Date</label>
+            <input type="date"
+                name="event_date"
+                value="{{ event.event_date|date:'Y-m-d' }}">
+
+            <!-- TIME -->
+            <label>Time</label>
+            <input type="time"
+                name="event_time"
+                value="{{ event.event_time|time:'H:i' }}">
+
+            <!-- IMAGE -->
+            <label>Upload Image</label>
+            <input type="file"
+                name="image"
+                accept="image/*">
+
+            {% if event.image_url %}
+                <p style="margin-top:10px; font-size:13px; color:#64748b;">
+                    Current image: <br>
+                    <img src="/media/{{ event.image_url }}" width="150">
+                </p>
+            {% endif %}
+
+            <div class="button-row">
+                <button type="submit" class="primary">Simpan</button>
+                <button type="button"
+                        class="secondary"
+                        onclick="window.location.href='{% url 'admin_explore' %}'">
+                    Batal
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

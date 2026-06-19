@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Culture</title>
+
+    <!-- ✅ Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- ✅ Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom Style -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: blue;
+        }
+
+
+
+
+
+        .hero {
+            padding: 60px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #2c2c54, #706fd3);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+
+
+
+
+
+
+
+
+
+
+        /* NAVBAR CSS */
+        .navbar {
+            background-color: #016632;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            font-family: 'Poppins', sans-serif !important;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        .navbar a {
+            text-decoration: none !important;
+            color: white;
+            transition: 0.2s;
+            font-family: 'Poppins', sans-serif !important;
+            display: inline-block;
+        }
+
+        .navbar a:hover {
+            transform: translateY(-2px);
+            color: #ffc107 !important;
+        }
+
+        .active-link {
+            font-weight: 600;
+            border-bottom: 2px solid white;
+        }
+
+        .admin-btn {
+            background: #ffc107;
+            color: black !important;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 5px;
+            text-align: center;
+        }
+
+        .admin-btn:hover {
+            background: #e0a800 !important;
+            color: black !important;
+            transform: translateY(-2px);
+        }
+
+        .brand-link {
+            text-decoration: none !important;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+        }
+
+        @media (max-width: 767.98px) {
+            .navbar-collapse {
+                background-color: #016632;
+                padding: 15px 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                margin-top: 10px;
+            }
+
+            .nav-links-container {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px !important;
+                width: 100%;
+            }
+
+            .admin-btn {
+                margin-left: 0 !important;
+                width: 100%;
+                text-align: center;
+            }
+
+            .active-link {
+                border-bottom: none;
+                border-left: 3px solid white;
+                padding-left: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ✅ Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand brand-link" href="/">
+                <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
+                <span>Digital Culture</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="d-flex align-items-center ms-auto gap-3 nav-links-container">
+                    <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
+                    <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
+                    <a href="/culture_performance/"
+                        class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>
+                    <a href="/business_performance/"
+                        class="{% if request.path == '/business_performance/' %}active-link{% endif %}">Business</a>
+                    <a href="/admin-home/" class="admin-btn">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ✅ Main Content -->
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ✅ Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

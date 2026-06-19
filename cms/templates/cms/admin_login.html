@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login – Digital Culture</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #016632, #00A651);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+
+.login-card .brand {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-card .brand h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #016632;
+    margin-top: 6px;
+}
+
+.login-card .brand p {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.login-icon {
+    width: 56px;
+    height: 56px;
+    background: #016632;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 18px;
+}
+
+.form-control:focus {
+    border-color: #016632;
+    box-shadow: 0 0 0 3px rgba(1,102,50,0.12);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 11px;
+    background: #016632;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-login:hover {
+    background: #00A651;
+}
+
+.error-msg {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    border: 1px solid #fecaca;
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #016632;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="brand">
+        <div class="login-icon">🔐</div>
+        <h2>Admin Login</h2>
+        <p>Masuk sebagai administrator Digital Culture</p>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'admin_login' %}">
+        {% csrf_token %}
+
+        <label class="form-label" for="username">Username</label>
+        <input
+            class="form-control"
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Masukkan username"
+            autocomplete="username"
+            required
+        >
+
+        <label class="form-label" for="password">Password</label>
+        <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Masukkan password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit" class="btn-login">Masuk</button>
+    </form>
+
+    <a href="/" class="back-link">← Kembali ke Home</a>
+
+</div>
+
+</body>
+</html>

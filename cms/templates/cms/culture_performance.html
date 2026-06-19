@@ -1,0 +1,334 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Culture Performance — Pegadaian</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --green-dark:  #014f28;
+            --green-mid:   #016632;
+            --green-base:  #00A651;
+            --green-light: #e6f5ed;
+            --green-pale:  #f0faf4;
+            --gold:        #c9a84c;
+            --text-dark:   #0d1f15;
+            --text-muted:  #6b8878;
+            --border:      #d4e6da;
+            --surface:     #ffffff;
+            --bg:          #f4f8f5;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* NAVBAR */
+        
+        
+        
+        
+        
+        
+        
+
+        /* PAGE TITLE */
+        .page-title-wrap {
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 36px;
+        }
+        .page-eyebrow {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--green-light);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 4px 12px;
+            font-size: 11px; font-weight: 600;
+            color: var(--green-mid);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+        .page-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 36px; font-weight: 400;
+            color: var(--text-dark); line-height: 1.2;
+        }
+        .page-title em { font-style: italic; color: var(--green-base); }
+        .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 8px; font-weight: 300; }
+
+        /* SECTION HEADING */
+        .section-heading {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 20px;
+        }
+        .section-heading h5 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px; font-weight: 400; margin: 0;
+        }
+        .section-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* DASHBOARD CARDS */
+        .dashboard-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: box-shadow 0.2s;
+        }
+        .dashboard-card:hover { box-shadow: 0 8px 24px rgba(1,78,40,0.08); }
+        .dashboard-card-header {
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .dashboard-card-header h6 {
+            font-weight: 600; font-size: 14px; margin: 0;
+            color: var(--text-dark);
+        }
+        .dashboard-badge {
+            font-size: 11px; font-weight: 500;
+            background: var(--green-pale);
+            color: var(--green-mid);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 3px 10px;
+        }
+        .dashboard-card iframe {
+            width: 100%; display: block;
+            border: none; border-radius: 0;
+        }
+
+        /* INITIATIVE CARDS */
+        .initiative-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .initiative-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(1,78,40,0.10); }
+        .initiative-card::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--green-base));
+        }
+        .initiative-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+        .initiative-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px; }
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .status-badge.progress { background: #fef9e7; color: #92610a; border: 1px solid #f5e0a0; }
+        .status-badge.done { background: var(--green-pale); color: var(--green-mid); border: 1px solid var(--border); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 1.5s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* FOOTER */
+        .footer-custom { background: var(--green-dark); color: rgba(255,255,255,0.7); padding: 28px 0; margin-top: 60px; font-size: 13px; }
+        .footer-custom a { color: var(--gold); text-decoration: none; }
+
+        /* FEEDBACK BTN */
+        .feedback-btn {
+            position: fixed; bottom: 24px; right: 24px;
+            background: white; color: var(--green-mid);
+            font-size: 20px; width: 50px; height: 50px;
+            border-radius: 50%; text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .feedback-btn:hover { transform: scale(1.1); box-shadow: 0 8px 24px rgba(0,0,0,0.16); }
+
+        /* REVEAL */
+        .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+        .reveal.in { opacity: 1; transform: translateY(0); }
+    
+        
+        
+        
+        
+        
+        
+        
+        
+
+    
+        /* NAVBAR CSS */
+        .navbar { background-color: #016632; position: sticky; top: 0; z-index: 1000; font-family: 'Poppins', sans-serif !important; padding-top: 12px; padding-bottom: 12px; }
+        .navbar a { text-decoration: none !important; color: white; transition: 0.2s; font-family: 'Poppins', sans-serif !important; display: inline-block; }
+        .navbar a:hover { transform: translateY(-2px); color: #ffc107 !important; }
+        .active-link { font-weight: 600; border-bottom: 2px solid white; }
+        .admin-btn { background: #ffc107; color: black !important; padding: 6px 20px; border-radius: 20px; font-weight: 600; margin-left: 5px; text-align: center; }
+        .admin-btn:hover { background: #e0a800 !important; color: black !important; transform: translateY(-2px); }
+        .brand-link { text-decoration: none !important; color: white; display: inline-flex; align-items: center; gap: 10px; font-weight: 500; font-family: 'Poppins', sans-serif !important; }
+        .brand-logo { width: 28px; height: 28px; }
+        @media (max-width: 767.98px) {
+            .navbar-collapse {
+                background-color: #016632;
+                padding: 15px 10px;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                margin-top: 10px;
+            }
+            .nav-links-container {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px !important;
+                width: 100%;
+            }
+            .admin-btn {
+                margin-left: 0 !important;
+                width: 100%;
+                text-align: center;
+            }
+            .active-link {
+                border-bottom: none;
+                border-left: 3px solid white;
+                padding-left: 8px;
+            }
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-md navbar-dark">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand brand-link" href="/">
+            <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
+            <span>Digital Culture</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="d-flex align-items-center ms-auto gap-3 nav-links-container">
+                <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
+                <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
+                <a href="/culture_performance/" class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>
+                <a href="/business_performance/" class="{% if request.path == '/business_performance/' %}active-link{% endif %}">Business</a>
+                <a href="/admin-home/" class="admin-btn">Login</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- PAGE TITLE -->
+    <div class="page-title-wrap reveal">
+        <div class="page-eyebrow">📊 Analytics</div>
+        <h1 class="page-title">Culture <em>Performance</em></h1>
+        <p class="page-subtitle">Pantau metrik dan analytics budaya organisasi Pegadaian secara real-time.</p>
+    </div>
+
+
+    <!-- DASHBOARDS -->
+    <div class="section-heading reveal">
+        <h5>Culture Analytics</h5>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>CAP 3S — Senyum, Salam, Sapa Outlet</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Gerakan 5R Tahun</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://datastudio.google.com/embed/reporting/e2539f4c-8288-48b8-996f-fd15dad3939b/page/p_y2ourx4l0d" height="320"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Integrated Monitoring on the Spot Kantor Cabang</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://datastudio.google.com/embed/reporting/e0fdb376-e09f-4e47-9157-a390780c3cb7/page/p_y2ourx4l0d" height="320"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Morning Briefing dan Sharing & Learning</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://datastudio.google.com/embed/reporting/8824ffac-a811-4bdc-b1fe-2e947484c45a/page/p_y2ourx4l0d" height="320"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Culture Activation Program Co-Location</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+    </div>
+
+    <div class="dashboard-card reveal">
+        <div class="dashboard-card-header">
+            <h6>Forum Komunikasi TIB Kantor Wilayah</h6>
+            <span class="dashboard-badge">Looker Studio</span>
+        </div>
+        <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+    </div>
+
+    <!-- INITIATIVES -->
+    <div class="section-heading reveal" style="margin-top:40px;">
+        <h5>Ongoing Initiatives</h5>
+        <div class="section-line"></div>
+    </div>
+    
+        <div class="col-md-6">
+            <div class="initiative-card">
+                <div class="initiative-title">Cross-Functional Assignment</div>
+                <p class="initiative-desc">Cross-team collaboration initiative to strengthen inter-departmental digital culture adoption.</p>
+                <span class="status-badge progress"><span class="status-dot"></span> On Progress</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer-custom text-center">
+    <div class="container">
+        <p>Gade Tower · Pegadaian Kantor Pusat</p>
+        <p>Email: <a href="mailto:budaya.kerja.pusat@pegadaian.co.id">budaya.kerja.pusat@pegadaian.co.id</a></p>
+        <small style="opacity:.5;">© 2026 Pegadaian Digital Culture</small>
+    </div>
+</footer>
+
+<a href="/feedback/" class="feedback-btn">💬</a>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((e, i) => {
+            if (e.isIntersecting) {
+                setTimeout(() => e.target.classList.add('in'), i * 80);
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
