@@ -6,16 +6,20 @@ from .models import Event, EventRegistration, Attendance
 
 
 # ─────────────────────────────────────────────
-# EventRegistration Inline — shown inside Event admin page
+# Inline: show registrations inside Event page
 # ─────────────────────────────────────────────
 class EventRegistrationInline(admin.TabularInline):
-    """Tampilkan daftar peserta terdaftar langsung di halaman edit Event."""
     model = EventRegistration
     extra = 0
-    fields = ('full_name', 'email', 'phone', 'province', 'territory', 'registered_at')
+    fields = ('full_name', 'email', 'province', 'territory', 'phone', 'organization', 'registered_at')
     readonly_fields = ('registered_at',)
     can_delete = False
-    show_change_link = True
+    show_change_link = False
+    verbose_name = "Peserta Terdaftar"
+    verbose_name_plural = "Peserta Terdaftar"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).order_by('-registered_at')
 
 
 # ─────────────────────────────────────────────
@@ -78,6 +82,7 @@ class EventAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at',)
+    inlines        = [EventRegistrationInline]
 
     # ── Computed columns ────────────────────────────────────────
     @admin.display(description='Status', ordering='status')

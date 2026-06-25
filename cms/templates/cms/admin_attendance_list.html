@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance — Admin</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%);
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .navbar { background: linear-gradient(to right, #3b82f6, #60a5fa); display: flex; justify-content: space-between; padding: 15px 40px; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { color: white; font-weight: 600; text-decoration: none; font-size: 18px; }
+        .nav-links { display: flex; align-items: center; }
+        .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
+
+        .container { width: 90%; margin: 25px auto; padding-bottom: 40px; }
+
+        .hero {
+            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+            padding: 28px 30px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+        }
+        .hero h1 { font-size: 24px; color: white; }
+        .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255, 255, 255, 0.9); }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 800px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+        .summary-card {
+            background: rgba(255,255,255,0.85);
+            border-radius: 16px;
+            padding: 18px 20px;
+            backdrop-filter: blur(10px);
+        }
+        .summary-card .num { font-size: 26px; font-weight: 700; }
+        .summary-card .label { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+
+        .filter-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .filter-bar a {
+            text-decoration:none; padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600;
+            background: rgba(255,255,255,0.7); color:#475569;
+        }
+        .filter-bar a.active { background:#1e293b; color:white; }
+
+        .att-table {
+            background: rgba(255,255,255,0.9);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+        .att-row {
+            display:grid;
+            grid-template-columns: 1.4fr 1.2fr 1fr 1.2fr 1fr;
+            gap:12px;
+            padding: 16px 20px;
+            align-items:center;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .att-row.head { font-size:12px; font-weight:700; text-transform:uppercase; color:#94a3b8; background:rgba(241,245,249,0.6); }
+        .att-row:last-child { border-bottom:none; }
+        .att-photo { width:46px; height:46px; border-radius:10px; object-fit:cover; }
+        .att-email { font-weight:600; font-size:13.5px; }
+        .att-event { font-size:12.5px; color:#64748b; }
+        .att-coords { font-size:11.5px; color:#94a3b8; }
+
+        .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700; }
+        .badge.pending_verification { background:#fef9c3; color:#92400e; }
+        .badge.verified { background:#dcfce7; color:#15803d; }
+        .badge.rejected { background:#fee2e2; color:#b91c1c; }
+
+        .actions form { display:inline; }
+        .btn-verify, .btn-reject {
+            border:none; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; margin-right:6px;
+        }
+        .btn-verify { background:#16a34a; color:white; }
+        .btn-reject { background:#dc2626; color:white; }
+
+        .empty-state { padding:40px; text-align:center; color:#64748b; }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="{% url 'home' %}" class="logo">Digital Culture</a>
+        <div class="nav-links">
+            <a href="/admin-home/" class="{% if request.path == '/admin-home/' %}active{% endif %}">Control</a>
+            <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
+            <a href="/admin-attendance/" class="active">Attendance</a>
+            <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
+            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="hero">
+            <h1>Attendance Verification</h1>
+            <p>Verifikasi kehadiran peserta berdasarkan foto bukti dan koordinat GPS yang dikirim.</p>
+        </div>
+
+        <!-- SUMMARY (terhubung dengan analytics — STEP 4 business rule) -->
+        <div class="summary-grid">
+            <div class="summary-card"><div class="num">{{ summary.total }}</div><div class="label">Total Attendance</div></div>
+            <div class="summary-card"><div class="num">{{ summary.pending }}</div><div class="label">Pending Verification</div></div>
+            <div class="summary-card"><div class="num">{{ summary.verified }}</div><div class="label">Verified</div></div>
+            <div class="summary-card"><div class="num">{{ summary.rejected }}</div><div class="label">Rejected</div></div>
+        </div>
+
+        <div class="filter-bar">
+            <a href="?" class="{% if not current_status %}active{% endif %}">Semua</a>
+            {% for value, label in status_choices %}
+            <a href="?status={{ value }}" class="{% if current_status == value %}active{% endif %}">{{ label }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="att-table">
+            <div class="att-row head">
+                <div>Peserta</div>
+                <div>Event</div>
+                <div>Foto</div>
+                <div>Lokasi &amp; Waktu</div>
+                <div>Status / Aksi</div>
+            </div>
+
+            {% for att in attendances %}
+            <div class="att-row">
+                <div class="att-email">{{ att.participant_email }}</div>
+                <div class="att-event">{{ att.event_registration.event_name }}</div>
+                <div>
+                    {% if att.photo_evidence %}
+                    <a href="{{ att.photo_evidence.url }}" target="_blank">
+                        <img src="{{ att.photo_evidence.url }}" class="att-photo">
+                    </a>
+                    {% else %}—{% endif %}
+                </div>
+                <div class="att-coords">
+                    📍 {{ att.latitude }}, {{ att.longitude }}<br>
+                    🕒 {{ att.attendance_timestamp|date:'d M Y H:i' }}
+                </div>
+                <div class="actions">
+                    <span class="badge {{ att.status }}">{{ att.get_status_display }}</span>
+                    {% if att.status == 'pending_verification' %}
+                    <div style="margin-top:8px;">
+                        <form method="post" action="{% url 'admin_verify_attendance' att.attendance_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-verify">Verify</button>
+                        </form>
+                        <form method="post" action="{% url 'admin_reject_attendance' att.attendance_id %}" onsubmit="return confirm('Tolak attendance ini?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-reject">Reject</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">Belum ada data attendance.</div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</body>
+</html>
