@@ -83,12 +83,11 @@ WSGI_APPLICATION = 'digital_culture.wsgi.application'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    # Jika berjalan di Railway, gunakan URL kontainer internal mereka
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
 else:
-    # 2. Jika DATABASE_URL tidak ada (berarti sedang dijalankan di laptop pribadi)
+    # Jika DATABASE_URL tidak ada (berarti sedang dijalankan di laptop pribadi)
     # Gunakan settingan database lokal Anda yang lama
     DATABASES = {
         'default': {
