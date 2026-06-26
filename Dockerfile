@@ -28,4 +28,4 @@ RUN python manage.py collectstatic --noinput
 EXPOSE 7860
 
 # Jalankan aplikasi Django menggunakan Gunicorn pada port 7860
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "digital_culture.wsgi:application"]
+CMD python manage.py migrate --no-input && gunicorn digital_culture.wsgi:application --bind 0.0.0.0:$PORT
