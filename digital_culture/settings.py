@@ -28,10 +28,11 @@ SECRET_KEY = 'django-insecure-g-t1)#iw*swcw^(1_e7fy31)!!901(-imt_beq^tzq6%j7xv4t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-if 'CANONICAL_URL' in os.environ:
-    ALLOWED_HOSTS.append(os.environ.get('CANONICAL_URL'))
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '.railway.app',  # Ini akan menerima semua subdomain dari Railway
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
