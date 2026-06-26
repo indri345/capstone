@@ -75,9 +75,9 @@ WSGI_APPLICATION = 'digital_culture.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_culture',
+        'NAME': 'digital_cultureDB',
         'USER': 'postgres',
-        'PASSWORD': '124113',
+        'PASSWORD': '16042006',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

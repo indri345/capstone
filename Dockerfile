@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy file requirements dan install seluruh library (termasuk transformers)
+# Copy file requirements dan install seluruh library
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -24,8 +24,8 @@ COPY . /app/
 # Jalankan perintah kumpulkan file statis Django
 RUN python manage.py collectstatic --noinput
 
-# Buka port 7860 (Port khusus yang wajib digunakan di Hugging Face Spaces)
-EXPOSE 7860
+# Buka port 8080 (Standard Port Railway)
+EXPOSE 8080
 
-# Jalankan aplikasi Django menggunakan Gunicorn pada port 7860
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "digital_culture.wsgi:application"]
+# Jalankan migrasi secara otomatis, lalu nyalakan Gunicorn di port 8080
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 --timeout 180 digital_culture.wsgi:application"]

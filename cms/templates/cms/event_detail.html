@@ -706,6 +706,43 @@
                 {% endif %}
             </div>
 
+            <!-- ══ PARTICIPATION STATUS ═══════════════════════════ -->
+            {% if is_already_registered %}
+            <div class="lifecycle-strip" style="background:rgba(182,245,0,0.14); border-color:rgba(182,245,0,0.3);">
+                <span class="lc-badge" style="background:#0F3D2E; color:#B6F500;">
+                    {% if participation.code == 'registered' %}📝
+                    {% elif participation.code == 'attendance_submitted' %}🕓
+                    {% elif participation.code == 'attendance_verified' %}✅
+                    {% elif participation.code == 'feedback_submitted' %}⭐
+                    {% endif %}
+                    {{ participation.label }}
+                </span>
+                <div class="lc-meta-item">
+                    Anda terdaftar di event ini sebagai <strong>{{ participant_email }}</strong>
+                </div>
+                <button type="button" class="btn-action-link" onclick="clearParticipantSession()"
+                        style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;">
+                    Bukan saya / ganti email
+                </button>
+            </div>
+            {% else %}
+            <div class="lifecycle-strip" style="flex-wrap:wrap;">
+                <div class="lc-meta-item" style="font-weight:600;color:var(--ink);">
+                    🔍 Sudah pernah daftar event ini?
+                </div>
+                <form id="checkStatusForm" action="{% url 'check_participation_status' event.event_id %}" method="POST"
+                      style="display:flex; gap:8px; flex:1; min-width:240px; align-items:center;" novalidate>
+                    {% csrf_token %}
+                    <input type="email" name="email" required placeholder="Masukkan email pendaftaran Anda"
+                           style="flex:1; border:1.5px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px; background:#fff; outline:none;">
+                    <button type="submit" style="background:var(--forest); color:#fff; border:none; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                        Cek Status
+                    </button>
+                </form>
+            </div>
+            <div class="error-box" id="checkStatusError"></div>
+            {% endif %}
+
             <!-- META BENTO -->
             <div class="meta-bento">
                 <div class="meta-cell">
@@ -765,7 +802,36 @@
 
         <!-- CTA BAND — lifecycle-aware -->
         {% if event.status == 'published' or event.status == 'ongoing' %}
-            {% if event.is_registration_open and not event.is_full %}
+            {% if is_already_registered %}
+            <div class="cta-band">
+                <div class="cta-left">
+                    <div class="cta-eyebrow">Anda Sudah Terdaftar</div>
+                    <div class="cta-heading">Status: {{ participation.label }}</div>
+                    <div class="cta-sub">
+                        {% if participation.code == 'registered' %}
+                            Pantau halaman ini untuk informasi absensi saat hari event tiba.
+                        {% elif participation.code == 'attendance_submitted' %}
+                            Absensi Anda sedang diverifikasi oleh admin.
+                        {% elif participation.code == 'attendance_verified' %}
+                            Kehadiran Anda sudah terverifikasi. Sampai jumpa di event berikutnya!
+                        {% elif participation.code == 'feedback_submitted' %}
+                            Terima kasih sudah memberikan feedback untuk event ini!
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="cta-actions">
+                    {% if event.is_attendance_open and participation.code == 'registered' %}
+                    <a href="{% url 'submit_attendance' event.event_id %}" class="btn-primary-lime">Isi Absensi →</a>
+                    {% endif %}
+                    {% if request.GET.source == 'admin' %}
+                    <a href="/admin-explore/" class="btn-ghost-white">Back to Admin</a>
+                    {% else %}
+                    <a href="/explore/" class="btn-ghost-white">Explore More</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% elif event.is_registration_open and not event.is_full %}
             <div class="cta-band">
                 <div class="cta-left">
                     <div class="cta-eyebrow">
@@ -1139,6 +1205,64 @@
     });
     openModal();
     {% endif %}
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════
+     PARTICIPATION STATUS — cek status & ganti email
+══════════════════════════════════════════════ -->
+<script>
+(function () {
+    const checkForm = document.getElementById("checkStatusForm");
+    if (checkForm) {
+        checkForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const errBox = document.getElementById("checkStatusError");
+            errBox.classList.remove("show");
+            errBox.innerHTML = "";
+
+            try {
+                const res = await fetch(checkForm.action, {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": checkForm.querySelector("[name=csrfmiddlewaretoken]").value,
+                    },
+                    body: new FormData(checkForm),
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errBox.innerHTML = (data.errors || ["Email tidak ditemukan."]).join("<br>");
+                    errBox.classList.add("show");
+                    return;
+                }
+                // Sukses: reload supaya seluruh halaman (badge status, CTA band,
+                // tombol Daftar) ikut menyesuaikan dengan status terbaru dari server.
+                window.location.reload();
+            } catch (err) {
+                errBox.innerHTML = "Koneksi gagal. Periksa jaringan Anda.";
+                errBox.classList.add("show");
+            }
+        });
+    }
+
+    window.clearParticipantSession = function () {
+        // Hapus cookie sessionid tidak aman dilakukan dari JS murni (httponly),
+        // jadi cukup tandai lewat query param dan reload — server akan
+        // menampilkan form cek-status lagi karena kita kosongkan session
+        // peserta lewat endpoint kecil ini.
+        fetch("{% url 'check_participation_status' event.event_id %}", {
+            method: "POST",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: new URLSearchParams({ email: "", clear: "1" }),
+        }).finally(function () {
+            window.location.reload();
+        });
+    };
 })();
 </script>
 </body>

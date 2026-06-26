@@ -163,6 +163,52 @@ class EventRegistration(models.Model):
     def __str__(self):
         return f"{self.full_name} — {self.event_name}"
 
+    # ── Participation status helper ─────────────────────────────
+    PARTICIPATION_REGISTERED          = 'registered'
+    PARTICIPATION_ATTENDANCE_SUBMITTED = 'attendance_submitted'
+    PARTICIPATION_ATTENDANCE_VERIFIED  = 'attendance_verified'
+    PARTICIPATION_FEEDBACK_SUBMITTED   = 'feedback_submitted'
+
+    PARTICIPATION_LABELS = {
+        PARTICIPATION_REGISTERED:           'Registered',
+        PARTICIPATION_ATTENDANCE_SUBMITTED: 'Attendance Submitted',
+        PARTICIPATION_ATTENDANCE_VERIFIED:  'Attendance Verified',
+        PARTICIPATION_FEEDBACK_SUBMITTED:   'Feedback Submitted',
+    }
+
+    def get_participation_status(self):
+        """
+        Hitung status partisipasi tertinggi yang sudah dicapai peserta ini,
+        urut dari yang paling awal (Registered) ke paling akhir
+        (Feedback Submitted). Selalu dihitung ulang dari data terbaru di DB
+        (bukan field tersimpan) supaya selalu akurat.
+
+        Returns: dict {'code': str, 'label': str}
+        """
+        status_code = self.PARTICIPATION_REGISTERED
+
+        attendance = self.attendances.order_by('-attendance_timestamp').first()
+        if attendance is not None:
+            if attendance.status == Attendance.STATUS_VERIFIED:
+                status_code = self.PARTICIPATION_ATTENDANCE_VERIFIED
+            else:
+                # pending_verification ATAU rejected -> tetap dianggap
+                # "Attendance Submitted" (sudah submit, terlepas hasil verifikasi)
+                status_code = self.PARTICIPATION_ATTENDANCE_SUBMITTED
+
+        feedback_exists = Feedback.objects.filter(
+            event_id=self.event_id,
+            participant_email__iexact=self.email,
+            rating__isnull=False,
+        ).exists()
+        if feedback_exists:
+            status_code = self.PARTICIPATION_FEEDBACK_SUBMITTED
+
+        return {
+            'code': status_code,
+            'label': self.PARTICIPATION_LABELS[status_code],
+        }
+
 
 # =====================================
 # NEWS EDITIONS
@@ -265,6 +311,12 @@ class Feedback(models.Model):
     )
 
     session_id      = models.CharField(max_length=100, blank=True, null=True)
+    # Email peserta (opsional). Kolom ini SUDAH ADA secara fisik di database
+    # (terlihat lewat `inspectdb`), tapi belum pernah didefinisikan di model
+    # Django sebelumnya. Diisi otomatis dari session saat peserta yang sudah
+    # teridentifikasi (lewat registrasi / cek status) mengirim feedback,
+    # supaya status "Feedback Submitted" bisa dicek per-email di Event Detail.
+    participant_email = models.EmailField(max_length=255, blank=True, null=True, db_index=True)
     message         = models.TextField()
     sentiment       = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, default='neutral')
     rating          = models.IntegerField(null=True, blank=True)
@@ -274,8 +326,30 @@ class Feedback(models.Model):
 
     class Meta:
         db_table = 'feedback'
-        managed = False
+        managed = True   # Changed to True so Django manages the new `email` column
         ordering = ['-created_at']
+
+    @staticmethod
+    def email_has_verified_attendance(email, event=None):
+        """
+        Step 7 — Anonymous Feedback System.
+
+        True hanya jika `email` punya minimal satu Attendance dengan
+        status Verified. Kalau `event` diberikan, pengecekan dipersempit
+        ke attendance pada event tersebut saja (feedback untuk event A
+        harus attendance event A yang verified, bukan attendance event
+        lain).
+        """
+        if not email:
+            return False
+
+        qs = Attendance.objects.filter(
+            participant_email__iexact=email.strip(),
+            status=Attendance.STATUS_VERIFIED,
+        )
+        if event is not None:
+            qs = qs.filter(event_registration__event_id=event.event_id)
+        return qs.exists()
 
 
 # =====================================

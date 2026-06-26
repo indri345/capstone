@@ -14,6 +14,7 @@ urlpatterns = [
     path('business_performance/', views.business_performance, name='business_performance'),
     path('track/', views.track_activity, name='track_activity'),
     path('event/<int:id>/register/', views.register_event, name='register_event'),
+    path('event/<int:id>/check-status/', views.check_participation_status, name='check_participation_status'),
     path('success/', views.success_page, name='success_page'),
     path('news_redirect/<int:id>/', views.redirect_news, name='redirect_news'),
     path('attribute_redirect/<int:id>/', views.redirect_attribute, name='redirect_attribute'),

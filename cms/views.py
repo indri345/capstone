@@ -9,7 +9,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.utils import timezone
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncQuarter, TruncYear
 import json, uuid
 from datetime import date, datetime, timedelta
 from groq import Groq
@@ -24,6 +24,7 @@ from .models import (
     VisitorLog,
     EventCoreValue,
     EventRegistration,
+    Attendance,
 )
 from .recommendation import (get_recommended_events, get_latest_news)
 from .sentiment import sentiment_analyzer
@@ -272,93 +273,212 @@ def classify_feedback(message):
         confidence = 0.50
     return sentiment, confidence
 
-
 # =========================================================
 # CHAT AI
 # =========================================================
 @require_http_methods(["POST"])
 def chat_with_ai(request):
+
     try:
         data = json.loads(request.body)
+
         message  = data.get('message', '').strip()
         event_id = data.get('event_id')
 
-        if not message:
-            return JsonResponse({'status': 'error', 'message': 'Pesan kosong'}, status=400)
+        # ================= VALIDASI =================
 
+        if not message:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Pesan kosong'
+            }, status=400)
+
+        # ================= OPTIONAL EVENT =================
+        # event boleh kosong
         event = None
+
         if event_id:
             try:
                 event = Event.objects.get(event_id=event_id)
+
             except Event.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': 'Event tidak valid'}, status=404)
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Event tidak valid'
+                }, status=404)
 
         session_id = get_or_create_session(request)
+
         sentiment, confidence = classify_feedback(message)
+
+        # ================= HISTORY CHAT =================
 
         previous_feedbacks = Feedback.objects.filter(
             session_id=session_id
         ).exclude(
             ai_response__isnull=True
         ).order_by('-created_at')[:5]
+
         previous_feedbacks = reversed(previous_feedbacks)
+
+        # ================= CONTEXT DATA (EVENTS & NEWS) =================
+        db_events = Event.objects.all().order_by('-event_date')[:5]
+        db_news = News.objects.all().order_by('-created_at')[:5]
+
+        events_list = []
+        for ev in db_events:
+            date_str = ev.event_date.strftime('%d %b %Y') if ev.event_date else 'Tidak ditentukan'
+            time_str = ev.event_time.strftime('%H:%M') if ev.event_time else 'Tidak ditentukan'
+            desc_str = ev.description[:120] + '...' if ev.description and len(ev.description) > 120 else (ev.description or '')
+            events_list.append(
+                f"- ID: {ev.event_id}\n"
+                f"  Nama: {ev.event_name}\n"
+                f"  Tanggal: {date_str}\n"
+                f"  Waktu: {time_str}\n"
+                f"  Lokasi: {ev.location or 'Tidak ditentukan'}\n"
+                f"  Deskripsi: {desc_str}\n"
+                f"  Link: /event_detail/{ev.event_id}/"
+            )
+
+        news_list = []
+        for nw in db_news:
+            date_str = nw.created_at.strftime('%d %b %Y') if nw.created_at else 'Tidak ditentukan'
+            content_str = nw.content[:120] + '...' if nw.content and len(nw.content) > 120 else (nw.content or '')
+            news_list.append(
+                f"- ID: {nw.news_id}\n"
+                f"  Judul: {nw.title or 'Tanpa Judul'}\n"
+                f"  Tanggal: {date_str}\n"
+                f"  Ringkasan: {content_str}\n"
+                f"  Link: /news_redirect/{nw.news_id}/"
+            )
+
+        events_context_str = "\n\n".join(events_list) if events_list else "Tidak ada data event."
+        news_context_str = "\n\n".join(news_list) if news_list else "Tidak ada data berita."
+
+        current_event_context = ""
+        if event:
+            current_event_context = (
+                f"User saat ini sedang membuka halaman event berikut:\n"
+                f"- Nama: {event.event_name}\n"
+                f"- Deskripsi: {event.description or 'Tidak ada'}\n"
+                f"- Tanggal: {event.event_date.strftime('%d %b %Y') if event.event_date else 'Tidak ditentukan'}\n"
+                f"- Lokasi: {event.location or 'Tidak ada'}\n\n"
+            )
+
+        # ================= PROMPT =================
+
+        system_content = (
+            "Kamu adalah asisten digital Pegadaian bernama Digi.\n\n"
+
+            "Kamu HANYA boleh menjawab topik terkait Pegadaian, seperti:\n"
+            "- budaya digital Pegadaian\n"
+            "- layanan Pegadaian\n"
+            "- aplikasi dan teknologi Pegadaian\n"
+            "- event atau seminar Pegadaian\n"
+            "- berita atau news Pegadaian\n"
+            "- transformasi digital Pegadaian\n"
+            "- pengalaman pengguna terhadap Pegadaian\n\n"
+
+            f"{current_event_context}"
+
+            "Berikut adalah data event terbaru/mendatang dari database Pegadaian:\n"
+            f"{events_context_str}\n\n"
+
+            "Berikut adalah data berita/news terbaru dari database Pegadaian:\n"
+            f"{news_context_str}\n\n"
+
+            "Jika user bertanya di luar Pegadaian "
+            "(contoh: politik, game, kesehatan, coding umum, hiburan), "
+            "tolak dengan sopan dan arahkan kembali ke topik Pegadaian.\n\n"
+
+            "Ketika menjawab pertanyaan tentang event atau berita/news:\n"
+            "- Gunakan data di atas untuk memberikan informasi yang akurat.\n"
+            "- Berikan detail tanggal, lokasi, dan penjelasan singkat jika ditanyakan.\n"
+            "- Sertakan link dalam bentuk tag HTML <a> agar user bisa mengkliknya langsung di chat. FORMAT LINK:\n"
+            "  <a href=\"/event_detail/ID_EVENT/\" style=\"color: #00A651; font-weight: bold; text-decoration: underline;\">Nama Event</a>\n"
+            "  atau <a href=\"/news_redirect/ID_NEWS/\" style=\"color: #00A651; font-weight: bold; text-decoration: underline;\">Judul Berita</a>\n"
+            "- Ganti ID_EVENT atau ID_NEWS dengan ID riil yang sesuai dari data di atas.\n"
+            "- PENTING: Gunakan tag HTML <a> persis seperti contoh di atas (dengan inline style warna hijau #00A651 agar kontras dan tebal). Jangan gunakan markdown link seperti [Nama](/link).\n\n"
+
+            "Gunakan bahasa yang sama dengan user.\n"
+            "- Indonesia → jawab Indonesia\n"
+            "- English → jawab English\n"
+            "- Campur → jawab natural\n\n"
+
+            "Aturan:\n"
+            "- Maksimal 3 kalimat. Namun, jika kamu memberikan daftar/list event atau berita, batasan 3 kalimat boleh dilonggarkan agar kamu bisa menyusun daftar poin-poin yang rapi, informatif, dan jelas.\n"
+            "- Jangan terlalu panjang\n"
+            "- Jawaban harus nyambung dengan chat sebelumnya\n"
+            "- Ramah dan profesional\n"
+            "- Jangan mengulang jawaban yang sama\n"
+            "- Gaya modern AI assistant\n"
+            "- Jika user memberi kritik → respon empati\n"
+            "- Jika user memberi pujian → respon positif singkat\n\n"
+
+            "Di akhir jawaban tambahkan:\n"
+            "IS_FEEDBACK:true\n"
+            "jika user memberi opini, kritik, pengalaman, atau penilaian.\n\n"
+
+            "IS_FEEDBACK:false\n"
+            "jika user hanya bertanya informasi biasa."
+        )
 
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "Kamu adalah asisten digital Pegadaian bernama Digi.\n\n"
-                    "Kamu HANYA boleh menjawab topik terkait Pegadaian, seperti:\n"
-                    "- budaya digital Pegadaian\n"
-                    "- layanan Pegadaian\n"
-                    "- aplikasi dan teknologi Pegadaian\n"
-                    "- event atau seminar Pegadaian\n"
-                    "- transformasi digital Pegadaian\n"
-                    "- pengalaman pengguna terhadap Pegadaian\n\n"
-                    "Jika user bertanya di luar Pegadaian "
-                    "(contoh: politik, game, kesehatan, coding umum, hiburan), "
-                    "tolak dengan sopan dan arahkan kembali ke topik Pegadaian.\n\n"
-                    "Gunakan bahasa yang sama dengan user.\n"
-                    "Aturan:\n"
-                    "- Maksimal 2 kalimat\n"
-                    "- Jangan terlalu panjang\n"
-                    "- Jawaban harus nyambung dengan chat sebelumnya\n"
-                    "- Ramah dan profesional\n"
-                    "- Jangan mengulang jawaban yang sama\n"
-                    "- Gaya modern AI assistant\n"
-                    "- Jika user memberi kritik → respon empati\n"
-                    "- Jika user memberi pujian → respon positif singkat\n\n"
-                    "Di akhir jawaban tambahkan:\n"
-                    "IS_FEEDBACK:true\n"
-                    "jika user memberi opini, kritik, pengalaman, atau penilaian.\n\n"
-                    "IS_FEEDBACK:false\n"
-                    "jika user hanya bertanya informasi biasa."
-                )
+                "content": system_content
             }
         ]
 
-        for fb in previous_feedbacks:
-            messages.append({"role": "user", "content": fb.message})
-            messages.append({"role": "assistant", "content": fb.ai_response})
+        # ================= HISTORY =================
 
-        messages.append({"role": "user", "content": message})
+        for fb in previous_feedbacks:
+
+            messages.append({
+                "role": "user",
+                "content": fb.message
+            })
+
+            messages.append({
+                "role": "assistant",
+                "content": fb.ai_response
+            })
+
+        # ================= USER MESSAGE =================
+
+        messages.append({
+            "role": "user",
+            "content": message
+        })
+
+        # ================= AI RESPONSE =================
 
         client = Groq(api_key=settings.GROQ_API_KEY)
+
         groq_response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
-            max_tokens=80,
+            max_tokens=300,
             temperature=0.6,
         )
 
         full_reply = groq_response.choices[0].message.content.strip()
-        is_feedback = "IS_FEEDBACK:true" in full_reply
+
+        # ================= FEEDBACK FLAG =================
+
+        is_feedback = False
+
+        if "IS_FEEDBACK:true" in full_reply:
+            is_feedback = True
+
         reply = (
             full_reply
             .replace("IS_FEEDBACK:true", "")
             .replace("IS_FEEDBACK:false", "")
             .strip()
         )
+
+        # ================= SAVE DB =================
 
         fb = Feedback.objects.create(
             session_id=session_id,
@@ -370,17 +490,28 @@ def chat_with_ai(request):
             source_platform='web',
         )
 
+        # ================= CEK RATING =================
+
         show_rating = False
+
+        # rating hanya muncul kalau:
+        # 1. feedback
+        # 2. ada event
+        # 3. event sudah selesai
         if is_feedback and event:
+
             already_rated = Feedback.objects.filter(
                 session_id=session_id,
                 event=event,
                 rating__isnull=False
             ).exists()
+
             show_rating = (
                 event.event_date < date.today()
                 and not already_rated
             )
+
+        # ================= RESPONSE =================
 
         response = JsonResponse({
             'status': 'success',
@@ -390,50 +521,88 @@ def chat_with_ai(request):
             'confidence': round(confidence * 100),
             'show_rating': show_rating
         })
+
         response.set_cookie(
-            'feedback_session', session_id,
-            max_age=60*60*24*30, httponly=True, samesite='Lax'
+            'feedback_session',
+            session_id,
+            max_age=60*60*24*30,
+            httponly=True,
+            samesite='Lax'
         )
+
         return response
 
     except Exception as e:
+
         import traceback
         traceback.print_exc()
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 # =========================================================
 # SAVE RATING
 # =========================================================
+
 @require_http_methods(["POST"])
 def save_feedback(request):
+
     try:
         data = json.loads(request.body)
+
         feedback_id = data.get('feedback_id')
         rating      = data.get('rating')
 
         if not feedback_id:
-            return JsonResponse({'status': 'error', 'message': 'Feedback ID tidak ditemukan'}, status=400)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Feedback ID tidak ditemukan'
+            }, status=400)
+
         if not rating:
-            return JsonResponse({'status': 'error', 'message': 'Rating wajib diisi'}, status=400)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Rating wajib diisi'
+            }, status=400)
 
         rating = int(rating)
+
         if rating < 1 or rating > 5:
-            return JsonResponse({'status': 'error', 'message': 'Rating harus 1-5'}, status=400)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Rating harus 1-5'
+            }, status=400)
 
         session_id = get_or_create_session(request)
-        fb = Feedback.objects.get(feedback_id=feedback_id)
 
+        fb = Feedback.objects.get(
+            feedback_id=feedback_id
+        )
+
+        # ================= CEK SESSION =================
         if fb.session_id != session_id:
-            return JsonResponse({'status': 'error', 'message': 'Session tidak valid'}, status=403)
-        if fb.rating is not None:
-            return JsonResponse({'status': 'error', 'message': 'Rating sudah pernah diberikan'}, status=400)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Session tidak valid'
+            }, status=403)
 
+        # ================= CEK SUDAH RATING =================
+        if fb.rating is not None:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Rating sudah pernah diberikan'
+            }, status=400)
+
+        # ================= UPDATE RATING =================
         fb.rating = rating
         fb.save()
 
+        # ================= UPDATE AVG EVENT =================
         avg_rating = Feedback.objects.filter(
-            event=fb.event, rating__isnull=False
+            event=fb.event,
+            rating__isnull=False
         ).aggregate(avg=Avg('rating'))['avg']
 
         fb.event.rating = round(avg_rating, 1)
@@ -446,11 +615,19 @@ def save_feedback(request):
         })
 
     except Feedback.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Feedback tidak ditemukan'}, status=404)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Feedback tidak ditemukan'
+        }, status=404)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 
 def culture_performance(request):
@@ -468,6 +645,40 @@ def detail(request, id):
 # =====================
 # EVENT DETAIL
 # =====================
+def _get_participation_context(request, event):
+    """
+    Tentukan email peserta yang "sedang teridentifikasi" di browser ini
+    (lewat session, hasil registrasi/attendance/cek-status sebelumnya),
+    lalu hitung status partisipasinya untuk event ini.
+
+    Mengembalikan dict siap pakai untuk context template:
+        {
+            'participant_email': str | None,
+            'participation': {'code': str, 'label': str} | None,
+            'is_already_registered': bool,
+        }
+    """
+    email = (request.session.get('participant_email') or '').strip().lower()
+
+    participation = None
+    is_already_registered = False
+
+    if email:
+        reg = EventRegistration.objects.filter(
+            event_id=event.event_id,
+            email__iexact=email,
+        ).first()
+        if reg is not None:
+            is_already_registered = True
+            participation = reg.get_participation_status()
+
+    return {
+        'participant_email': email or None,
+        'participation': participation,
+        'is_already_registered': is_already_registered,
+    }
+
+
 def event_detail(request, id):
     event = get_object_or_404(Event, event_id=id)
 
@@ -489,7 +700,61 @@ def event_detail(request, id):
     )
 
     context = {'event': event}
+    context.update(_get_participation_context(request, event))
     return render(request, 'cms/event_detail.html', context)
+
+
+def check_participation_status(request, id):
+    """
+    Form kecil "Cek Status Pendaftaran": peserta mengetik email,
+    sistem menyimpan email itu ke session (supaya halaman Event Detail
+    bisa menampilkan status partisipasi tanpa perlu login), lalu
+    redirect balik ke Event Detail.
+    """
+    event = get_object_or_404(Event, event_id=id)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    if request.method != "POST":
+        return redirect('event_detail', id=event.event_id)
+
+    # "Bukan saya / ganti email": hapus identitas peserta dari session.
+    if request.POST.get('clear') == '1':
+        request.session.pop('participant_email', None)
+        if is_ajax:
+            return JsonResponse({"status": "success", "cleared": True})
+        return redirect('event_detail', id=event.event_id)
+
+    email = (request.POST.get('email') or '').strip().lower()
+    if not email:
+        msg = "Email wajib diisi untuk mengecek status pendaftaran."
+        if is_ajax:
+            return JsonResponse({"status": "error", "errors": [msg]}, status=400)
+        return redirect('event_detail', id=event.event_id)
+
+    reg = EventRegistration.objects.filter(
+        event_id=event.event_id,
+        email__iexact=email,
+    ).first()
+
+    if reg is None:
+        msg = "Email ini belum pernah mendaftar pada event ini."
+        if is_ajax:
+            return JsonResponse({"status": "error", "errors": [msg]}, status=404)
+        return redirect('event_detail', id=event.event_id)
+
+    # Simpan ke session supaya halaman ini (dan kunjungan berikutnya di
+    # browser yang sama) otomatis tahu siapa peserta yang sedang melihat.
+    request.session['participant_email'] = email
+
+    if is_ajax:
+        participation = reg.get_participation_status()
+        return JsonResponse({
+            "status": "success",
+            "participation_code": participation['code'],
+            "participation_label": participation['label'],
+        })
+
+    return redirect('event_detail', id=event.event_id)
 
 
 def _format_event_date(event):
@@ -528,6 +793,26 @@ def register_event(request, id):
         if not data.get("organization") and data.get("instansi"):
             data["organization"] = data.get("instansi")
 
+        # Validasi backend eksplisit: tolak kalau email ini SUDAH terdaftar
+        # untuk event ini. Ini lapisan pertahanan tambahan di server —
+        # tombol "Daftar" di frontend juga disembunyikan untuk peserta yang
+        # sudah teridentifikasi terdaftar, tapi validasi ini tetap berjalan
+        # di backend terlepas dari apa yang dikirim klien.
+        submitted_email = (data.get("email") or "").strip().lower()
+        if submitted_email:
+            already_registered = EventRegistration.objects.filter(
+                event_id=event.event_id,
+                email__iexact=submitted_email,
+            ).exists()
+            if already_registered:
+                errors = ["Email ini sudah terdaftar untuk event ini."]
+                if is_ajax:
+                    return JsonResponse({"status": "error", "errors": errors}, status=400)
+                return render(
+                    request, "cms/event_detail.html",
+                    {"event": event, "errors": errors, "open_register_modal": True},
+                )
+
         form = EventRegistrationForm(data, event=event)
 
         if not form.is_valid():
@@ -552,6 +837,10 @@ def register_event(request, id):
                 request, "cms/event_detail.html",
                 {"event": event, "errors": errors, "form": form, "open_register_modal": True},
             )
+
+        # Simpan email ke session supaya halaman Event Detail langsung tahu
+        # status partisipasi peserta ini begitu mereka kembali / refresh.
+        request.session['participant_email'] = reg.email
 
         payload = {
             "status": "success",
@@ -1312,6 +1601,10 @@ def submit_attendance(request, id):
             longitude=longitude or None,
         )
 
+        # Simpan email ke session supaya status partisipasi di Event Detail
+        # ikut terupdate begitu peserta kembali ke halaman tersebut.
+        request.session['participant_email'] = email
+
         return render(request, 'cms/attendance_form.html', {
             'event': event,
             'show_success': True,
@@ -1321,9 +1614,64 @@ def submit_attendance(request, id):
     return render(request, 'cms/attendance_form.html', {'event': event})
 
 
+def _resolve_period_range(period, year, quarter, month):
+    """
+    Terjemahkan parameter filter (period + year/quarter/month) dari
+    query string menjadi (start_datetime, end_datetime, trunc_function,
+    label) yang dipakai untuk memotong queryset berdasarkan tanggal dan
+    mengelompokkan hasil agregasi. Dipakai oleh bagian Attendance
+    Analytics (Step 8) di halaman gabungan ini.
+
+    period: 'monthly' | 'quarterly' | 'ytd'
+    """
+    now = timezone.now()
+    year = int(year) if year else now.year
+
+    if period == 'quarterly':
+        quarter = int(quarter) if quarter else ((now.month - 1) // 3) + 1
+        start_month = (quarter - 1) * 3 + 1
+        start = datetime(year, start_month, 1, tzinfo=now.tzinfo)
+        end_month = start_month + 2
+        if end_month == 12:
+            end = datetime(year, 12, 31, 23, 59, 59, tzinfo=now.tzinfo)
+        else:
+            end = datetime(year, end_month + 1, 1, tzinfo=now.tzinfo) - timedelta(seconds=1)
+        trunc = TruncMonth
+        label = f"Q{quarter} {year}"
+
+    elif period == 'ytd':
+        start = datetime(year, 1, 1, tzinfo=now.tzinfo)
+        end = now if year == now.year else datetime(year, 12, 31, 23, 59, 59, tzinfo=now.tzinfo)
+        trunc = TruncMonth
+        label = f"YTD {year}"
+
+    else:  # 'monthly' (default)
+        month = int(month) if month else now.month
+        start = datetime(year, month, 1, tzinfo=now.tzinfo)
+        if month == 12:
+            end = datetime(year, 12, 31, 23, 59, 59, tzinfo=now.tzinfo)
+        else:
+            end = datetime(year, month + 1, 1, tzinfo=now.tzinfo) - timedelta(seconds=1)
+        trunc = TruncDay
+        label = start.strftime('%B %Y')
+
+    return start, end, trunc, label
+
+
 @admin_login_required
 def admin_attendance_list(request):
-    """Admin: list all attendance records with filter by status."""
+    """
+    Halaman gabungan "Attendance" di admin — digabung jadi satu page:
+      1) Attendance Verification (tabel + aksi verify/reject — sudah ada)
+      2) Attendance Analytics (Step 8 — KPI + chart, filter periode)
+      3) Participation Analytics (Step 9 — growth peserta, filter granularitas)
+
+    Semua query string filter dipisah prefix-nya agar tidak bertabrakan:
+      - status            -> filter tabel verifikasi
+      - period/year/quarter/month       -> filter Attendance Analytics
+      - granularity/p_year              -> filter Participation Analytics
+    """
+    # ---------- 1) ATTENDANCE VERIFICATION (tabel) ----------
     current_status = request.GET.get('status', '').strip()
 
     qs = Attendance.objects.select_related('event_registration').order_by('-attendance_timestamp')
@@ -1337,11 +1685,138 @@ def admin_attendance_list(request):
         'rejected': Attendance.objects.filter(status=Attendance.STATUS_REJECTED).count(),
     }
 
+    # ---------- 2) ATTENDANCE ANALYTICS (Step 8) ----------
+    period  = request.GET.get('period', 'monthly')
+    year    = request.GET.get('year')
+    quarter = request.GET.get('quarter')
+    month   = request.GET.get('month')
+
+    period_start, period_end, period_trunc, period_label = _resolve_period_range(period, year, quarter, month)
+
+    registrations_qs = EventRegistration.objects.filter(
+        registered_at__range=(period_start, period_end)
+    )
+    attendance_period_qs = Attendance.objects.filter(
+        attendance_timestamp__range=(period_start, period_end)
+    )
+
+    total_registrations = registrations_qs.count()
+    total_attendance_period = attendance_period_qs.count()
+    verified_attendance_period = attendance_period_qs.filter(status=Attendance.STATUS_VERIFIED).count()
+    pending_attendance_period  = attendance_period_qs.filter(status=Attendance.STATUS_PENDING).count()
+    rejected_attendance_period = attendance_period_qs.filter(status=Attendance.STATUS_REJECTED).count()
+
+    if total_registrations:
+        attendance_rate = round((total_attendance_period / total_registrations) * 100, 1)
+        no_show_rate = round(
+            ((total_registrations - total_attendance_period) / total_registrations) * 100, 1
+        )
+    else:
+        attendance_rate = 0
+        no_show_rate = 0
+
+    attendance_series_qs = (
+        attendance_period_qs
+        .annotate(period_bucket=period_trunc('attendance_timestamp'))
+        .values('period_bucket')
+        .annotate(count=Count('attendance_id'))
+        .order_by('period_bucket')
+    )
+    attendance_chart_labels = [
+        row['period_bucket'].strftime('%d %b') if period_trunc is TruncDay else row['period_bucket'].strftime('%b %Y')
+        for row in attendance_series_qs
+    ]
+    attendance_chart_values = [row['count'] for row in attendance_series_qs]
+
+    # ---------- 3) PARTICIPATION ANALYTICS (Step 9) ----------
+    granularity = request.GET.get('granularity', 'monthly')  # monthly | quarterly | yearly
+    p_year = request.GET.get('p_year')
+    p_year = int(p_year) if p_year else timezone.now().year
+
+    if granularity == 'yearly':
+        p_trunc = TruncYear
+        p_date_fmt = '%Y'
+        participation_qs = EventRegistration.objects.all()
+    elif granularity == 'quarterly':
+        p_trunc = TruncQuarter
+        p_date_fmt = None  # diformat manual di bawah
+        participation_qs = EventRegistration.objects.filter(registered_at__year=p_year)
+    else:
+        p_trunc = TruncMonth
+        p_date_fmt = '%b %Y'
+        participation_qs = EventRegistration.objects.filter(registered_at__year=p_year)
+
+    participation_series = list(
+        participation_qs
+        .annotate(bucket=p_trunc('registered_at'))
+        .values('bucket')
+        .annotate(count=Count('registration_id'))
+        .order_by('bucket')
+    )
+
+    participation_labels = []
+    participation_values = []
+    for row in participation_series:
+        bucket = row['bucket']
+        if granularity == 'quarterly':
+            q_num = (bucket.month - 1) // 3 + 1
+            participation_labels.append(f"Q{q_num} {bucket.year}")
+        else:
+            participation_labels.append(bucket.strftime(p_date_fmt))
+        participation_values.append(row['count'])
+
+    growth_percent = None
+    if len(participation_values) >= 2 and participation_values[-2] > 0:
+        growth_percent = round(
+            ((participation_values[-1] - participation_values[-2]) / participation_values[-2]) * 100, 1
+        )
+    elif len(participation_values) >= 2 and participation_values[-2] == 0 and participation_values[-1] > 0:
+        growth_percent = 100.0
+
+    total_participants = sum(participation_values)
+
+    # ---------- CONTEXT GABUNGAN ----------
     context = {
+        # Attendance Verification
         'attendances':    qs,
         'summary':        summary,
         'current_status': current_status,
         'status_choices': Attendance.STATUS_CHOICES,
+
+        # Attendance Analytics (Step 8)
+        'period': period,
+        'period_label': period_label,
+        'selected_year': int(year) if year else timezone.now().year,
+        'selected_quarter': int(quarter) if quarter else None,
+        'selected_month': int(month) if month else None,
+        'attendance_kpi': {
+            'total_registrations': total_registrations,
+            'total_attendance': total_attendance_period,
+            'verified_attendance': verified_attendance_period,
+            'pending_attendance': pending_attendance_period,
+            'rejected_attendance': rejected_attendance_period,
+            'attendance_rate': attendance_rate,
+            'no_show_rate': no_show_rate,
+        },
+        'attendance_chart_labels': json.dumps(attendance_chart_labels),
+        'attendance_chart_values': json.dumps(attendance_chart_values),
+        'year_choices': range(timezone.now().year - 3, timezone.now().year + 1),
+        'quarter_choices': [1, 2, 3, 4],
+        'month_choices': list(enumerate(
+            ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+            start=1
+        )),
+
+        # Participation Analytics (Step 9)
+        'granularity': granularity,
+        'selected_p_year': p_year,
+        'participation_labels': json.dumps(participation_labels),
+        'participation_values': json.dumps(participation_values),
+        'total_participants': total_participants,
+        'growth_percent': growth_percent,
+        'latest_period_label': participation_labels[-1] if participation_labels else None,
+        'latest_period_count': participation_values[-1] if participation_values else 0,
     }
     return render(request, 'cms/admin_attendance_list.html', context)
 
