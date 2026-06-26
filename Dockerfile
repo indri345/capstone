@@ -27,5 +27,4 @@ RUN python manage.py collectstatic --noinput
 # Buka port 8080 (Standard Port Railway)
 EXPOSE 8080
 
-# Jalankan migrasi secara otomatis, lalu nyalakan Gunicorn di port 8080
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8080 --workers 1 --threads 4 --timeout 180 digital_culture.wsgi:application"]
+CMD python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:$PORT digital_culture.wsgi:application
