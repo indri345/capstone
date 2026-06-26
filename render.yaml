@@ -2,8 +2,8 @@ services:
   - type: web
     name: capstone-django
     runtime: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    buildCommand: ./build.sh
     startCommand: gunicorn digital_culture.wsgi:application
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.10.0
