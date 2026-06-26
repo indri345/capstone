@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: capstone-django
-    runtime: python
-    buildCommand: ./build.sh
-    startCommand: gunicorn digital_culture.wsgi:application
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.0
