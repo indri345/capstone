@@ -73,17 +73,26 @@ WSGI_APPLICATION = 'digital_culture.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'budayakerja',
-        'USER': 'postgres',
-        'PASSWORD': '16042006',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+if DATABASE_URL:
+    # Jika berjalan di Railway, gunakan URL kontainer internal mereka
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    # 2. Jika DATABASE_URL tidak ada (berarti sedang dijalankan di laptop pribadi)
+    # Gunakan settingan database lokal Anda yang lama
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'budayakerja',
+            'USER': 'postgres',
+            'PASSWORD': '16042006',
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
