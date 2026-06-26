@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Jalankan migrasi database (opsional tapi disarankan)
+# Jalankan migrasi database
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 
-# Jalankan Gunicorn (Pastikan menggunakan tanda kutip ganda atau tanpa kutip untuk $PORT)
-exec gunicorn digital_culture.wsgi:application --bind 0.0.0.0:$PORT
+# GANTI PAKE INI (Sesuaikan 'nama_project_kamu' dengan folder wsgi.py berada)
+exec gunicorn nama_project_kamu.wsgi:application --bind 0.0.0.0:$PORT
