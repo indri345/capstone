@@ -34,6 +34,9 @@ ALLOWED_HOSTS = [
     '.railway.app',  # Ini akan menerima semua subdomain dari Railway
 ]
 
+if 'CANONICAL_URL' in os.environ:
+    ALLOWED_HOSTS.append(os.environ.get('CANONICAL_URL'))
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
