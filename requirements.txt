@@ -9,3 +9,5 @@ transformers==4.46.0
 vaderSentiment==3.3.2
 dj-database-url
 whitenoise
+Pillow
+
