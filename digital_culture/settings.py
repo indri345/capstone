@@ -11,7 +11,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,16 +74,31 @@ WSGI_APPLICATION = 'digital_culture.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'budayakerja',
-        'USER': 'postgres',
-        'PASSWORD': '16042006',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+_database_url = os.environ.get('DATABASE_URL')
+
+if _database_url:
+    _db = urlparse(_database_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _db.path.lstrip('/'),
+            'USER': _db.username,
+            'PASSWORD': _db.password,
+            'HOST': _db.hostname,
+            'PORT': str(_db.port or 5432),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('PGDATABASE', 'budayakerja'),
+            'USER': os.environ.get('PGUSER', 'postgres'),
+            'PASSWORD': os.environ.get('PGPASSWORD', ''),
+            'HOST': os.environ.get('PGHOST', '127.0.0.1'),
+            'PORT': os.environ.get('PGPORT', '5432'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -130,4 +147,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-GROQ_API_KEY = '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'
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
