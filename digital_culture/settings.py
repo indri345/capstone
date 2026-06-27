@@ -142,4 +142,4 @@ CSRF_TRUSTED_ORIGINS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-GROQ_API_KEY = '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'
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
