@@ -135,6 +135,11 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.up.railway.app',
+    'https://web-production-36aaf.up.railway.app',
+]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 GROQ_API_KEY = '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'
