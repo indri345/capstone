@@ -355,33 +355,103 @@
         }
 
         /* RESPONSIVE */
-        @media (max-width: 900px) {
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats {
-                grid-template-columns: 1fr;
-            }
-
-            .card-secondary {
-                max-width: 100%;
-            }
-        }
-
         @media (max-width: 1024px) {
-
             .secondary-grid,
             .analytics-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
         @media (max-width: 720px) {
             .container {
                 width: 95%;
+                padding-bottom: 20px;
+            }
+
+            .hero {
+                padding: 22px 18px;
+            }
+
+            .hero h1 {
+                font-size: 20px;
+            }
+
+            .hero p {
+                font-size: 12.8px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .secondary-stats {
+                gap: 14px;
+                margin-bottom: 24px;
+            }
+
+            .card,
+            .box,
+            .chart-card {
+                padding: 16px;
+            }
+
+            .card h2 {
+                font-size: 22px;
+            }
+
+            .card h2.highlight {
+                font-size: 18px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .chart-filters {
+                width: 100%;
+                overflow-x: auto;
+                padding: 4px;
+            }
+
+            .chart-filters button {
+                white-space: nowrap;
+            }
+
+            .canvas-wrap {
+                min-height: 220px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+                padding: 0 12px 20px;
+            }
+
+            .card-secondary {
+                max-width: 100%;
+            }
+
+            .activity-item,
+            .feedback-item {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .activity-title,
+            .feedback-title {
+                font-size: 12.8px;
+            }
+
+            .insight-list li {
+                padding: 12px 14px;
+                font-size: 12.7px;
             }
         }
     

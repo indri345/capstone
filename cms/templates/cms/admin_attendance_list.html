@@ -54,7 +54,6 @@
             gap: 16px;
             margin-bottom: 28px;
         }
-        @media (max-width: 800px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
         .summary-card {
             background: rgba(255,255,255,0.85);
             border-radius: 16px;
@@ -127,6 +126,47 @@
         .btn-reject { background:#dc2626; color:white; }
 
         .empty-state { padding:40px; text-align:center; color:#64748b; }
+
+        @media (max-width: 900px) {
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .navbar { padding: 15px 20px; }
+        }
+
+        @media (max-width: 720px) {
+            .container { width: 95%; }
+            .hero { padding: 22px 18px; }
+            .hero h1 { font-size: 20px; }
+            .hero p { font-size: 12.8px; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-bar form { flex-direction: column; align-items: stretch; }
+            .filter-bar select,
+            .filter-bar a {
+                width: 100%;
+                text-align: center;
+            }
+            .att-table { overflow-x: auto; }
+            .att-row { min-width: 780px; }
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .nav-links a {
+                margin-left: 0;
+                font-size: 13px;
+                padding: 4px 8px;
+            }
+        }
     </style>
 </head>
 

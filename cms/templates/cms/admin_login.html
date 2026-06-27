@@ -21,6 +21,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 20px;
 }
 
 .login-card {
@@ -125,6 +126,29 @@ body {
 
 .back-link:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 576px) {
+    body {
+        padding: 12px;
+    }
+
+    .login-card {
+        padding: 24px 18px;
+        border-radius: 16px;
+    }
+
+    .login-card .brand h2 {
+        font-size: 18px;
+    }
+
+    .login-card .brand p {
+        font-size: 12px;
+    }
+
+    .form-control {
+        margin-bottom: 14px;
+    }
 }
 </style>
 </head>
