@@ -1036,6 +1036,8 @@ def admin_home(request):
     else:
         engagement_text = 'Low'
 
+    engagement_percentage = f"{avg_engagement_score}%"
+
     last_week_visits = VisitorLog.objects.filter(visited_at__date__gte=start_date_initial, visited_at__date__lte=today).count()
     previous_week_visits = VisitorLog.objects.filter(
         visited_at__date__gte=start_date_initial - timedelta(days=7),
@@ -1153,6 +1155,7 @@ def admin_home(request):
         'total_visits': total_visits,
         'avg_time': avg_time,
         'engagement_text': engagement_text,
+        'engagement_percentage': engagement_percentage,
         'trends': trends,
         'positive': total_positive,
         'neutral': total_neutral,

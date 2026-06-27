@@ -66,6 +66,12 @@
         .header h3 { font-weight: 800; font-size: 1.8rem; letter-spacing: -0.3px; margin-bottom: 6px; }
         .header p { color: var(--text-muted); font-size: 0.97rem; }
 
+        @media (max-width: 767.98px) {
+            .header { margin: 24px 0 20px; }
+            .header h3 { font-size: 1.45rem; }
+            .header p { font-size: 0.92rem; }
+        }
+
         /* TOP BAR */
         .explore-topbar {
             background: var(--card);
@@ -73,6 +79,10 @@
             border-radius: var(--radius-md);
             padding: 18px;
             box-shadow: var(--shadow-soft);
+        }
+
+        @media (max-width: 767.98px) {
+            .explore-topbar { padding: 14px; }
         }
 
         .search-input {
@@ -98,6 +108,14 @@
             padding: 7px 16px;
             transition: all 0.2s ease;
         }
+
+        @media (max-width: 767.98px) {
+            .filter-chip,
+            #exploreClearBtn {
+                font-size: 12px;
+                padding: 7px 12px;
+            }
+        }
         .filter-chip:hover { border-color: var(--lime); }
         .filter-chip.active { background: var(--forest); color: white; border-color: var(--forest); }
 
@@ -108,11 +126,21 @@
         #exploreClearBtn:hover { background: var(--ink); color: white; border-color: var(--ink); }
 
         /* TABS */
-        .nav-tabs { border-bottom: 1px solid var(--border); gap: 6px; }
+        .nav-tabs { border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap; }
         .nav-tabs .nav-link {
             border: none; color: var(--text-muted); font-weight: 600; font-size: 14.5px;
             padding: 10px 18px; border-radius: 999px 999px 0 0;
             transition: all 0.2s ease;
+        }
+
+        @media (max-width: 767.98px) {
+            .nav-tabs { gap: 8px; }
+            .nav-tabs .nav-link {
+                font-size: 13px;
+                padding: 8px 14px;
+                width: 100%;
+                text-align: center;
+            }
         }
         .nav-tabs .nav-link:hover { color: var(--forest); background: var(--lime-soft); }
         .nav-tabs .nav-link.active {
@@ -158,9 +186,24 @@
             scroll-snap-align: start;
             position: relative;
         }
+
+        @media (max-width: 767.98px) {
+            .card-custom { flex-basis: 86%; min-width: 86%; }
+        }
+
+        @media (min-width: 768px) and (max-width: 1023.98px) {
+            .card-custom { flex-basis: 280px; }
+        }
         .card-custom:hover { transform: translateY(-6px); box-shadow: var(--shadow-card); border-color: rgba(182,245,0,0.5); }
 
         .card-img { height: 170px; width: 100%; object-fit: cover; transition: transform .35s ease; }
+
+        @media (max-width: 767.98px) {
+            .card-img { height: 150px; }
+            .card-body { padding: 14px; }
+            .card-body h6 { font-size: 13.5px; }
+            .card-body p { font-size: 12px; }
+        }
         .card-custom:hover .card-img { transform: scale(1.04); }
 
         .card-badge {
@@ -538,6 +581,9 @@
 
             /* Detail modal */
             .detail-overlay, .reg-overlay, .login-overlay { padding: 10px; }
+            .detail-shell, .reg-shell { max-width: 100%; width: 100%; border-radius: 16px; }
+            .detail-shell { max-height: 100%; }
+            .reg-shell { max-height: 100%; overflow-y: auto; }
             .detail-hero-bottom { padding: 18px 18px 16px; }
             .detail-meta-cell { padding: 12px; }
             .detail-meta-val { font-size: 12.5px; }

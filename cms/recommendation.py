@@ -4,6 +4,18 @@ from django.db.models import Avg, Count
 import re
 
 
+def normalize_engagement_score(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return 0
+
+    if value <= 1:
+        value *= 100
+
+    return max(0, min(100, round(value)))
+
+
 # =====================================
 # HELPER: Ekstrak event_id dari URL
 # =====================================
@@ -53,7 +65,7 @@ def _build_visitor_features():
 
         features[event_id]['visit_count'] += 1
         features[event_id]['total_duration'] += float(log.visit_duration or 0)
-        features[event_id]['total_engagement'] += float(log.engagement_score or 0)
+        features[event_id]['total_engagement'] += normalize_engagement_score(log.engagement_score)
         features[event_id]['count'] += 1
 
     # Hitung rata-rata
