@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='visitorlog',
-            options={},
+            options={'db_table': 'visitor_logs'},
         ),
         migrations.RunSQL(
             sql="""
