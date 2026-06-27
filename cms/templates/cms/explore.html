@@ -3,6 +3,7 @@
 <html>
 <head>
     <title>Explore</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -480,6 +481,80 @@
             .reg-shell { flex-direction: column; max-height: 96vh; overflow-y: auto; }
             .reg-left { flex: none; padding: 28px 24px; }
             .reg-right { padding: 28px 24px; }
+        }
+
+        /* ══════════════════════════════════════════════
+           RESPONSIVE FIXES — TABLET & MOBILE
+        ══════════════════════════════════════════════ */
+
+        /* TABLET */
+        @media (max-width: 991.98px) {
+            .container { padding-left: 18px; padding-right: 18px; }
+            .card-custom { flex: 0 0 260px; }
+            .detail-shell { max-width: 92vw; }
+            .reg-shell { max-width: 92vw; }
+        }
+
+        /* MOBILE */
+        @media (max-width: 575.98px) {
+            .container { padding-left: 14px; padding-right: 14px; }
+
+            .header { margin: 24px 0 18px; }
+            .header h3 { font-size: 1.4rem; }
+            .header p { font-size: 0.88rem; }
+
+            /* Top bar: stack search + filters, full width */
+            .explore-topbar { padding: 14px; }
+            .explore-topbar .row { row-gap: 10px; }
+            .explore-topbar .col-md-5 { justify-content: flex-start !important; }
+            .filter-chip, #exploreClearBtn { padding: 6px 12px; font-size: 12px; }
+
+            /* Tabs: allow horizontal scroll instead of wrapping/breaking */
+            .nav-tabs { flex-wrap: nowrap; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+            .nav-tabs::-webkit-scrollbar { display: none; }
+            .nav-tabs .nav-item { flex: 0 0 auto; }
+            .nav-tabs .nav-link { font-size: 13px; padding: 9px 14px; white-space: nowrap; }
+
+            .section-title { font-size: 1.05rem; margin: 26px 0 12px; }
+
+            /* Cards: show ~1 card per screen so it reads as a swipeable carousel */
+            .scroll-container { gap: 14px; padding-bottom: 12px; }
+            .card-custom { flex: 0 0 78vw; max-width: 320px; }
+            .card-img { height: 150px; }
+
+            /* Scroll arrows rely on :hover which doesn't exist on touch — always show, shrink & reposition */
+            .scroll-btn {
+                opacity: 1; pointer-events: auto;
+                width: 34px; height: 34px; font-size: 14px;
+            }
+            .scroll-btn.left { left: 2px; }
+            .scroll-btn.right { right: 2px; }
+
+            /* Asset/Logo/Video grid: smaller min column so it doesn't overflow */
+            #attributes div[style*="grid-template-columns: repeat(auto-fill"] {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+                gap: 8px !important;
+            }
+
+            /* Detail modal */
+            .detail-overlay, .reg-overlay, .login-overlay { padding: 10px; }
+            .detail-hero-bottom { padding: 18px 18px 16px; }
+            .detail-meta-cell { padding: 12px; }
+            .detail-meta-val { font-size: 12.5px; }
+
+            /* Login modal */
+            .login-header { padding: 28px 22px 22px; }
+            .login-body { padding: 24px 22px 28px; }
+
+            /* Register modal right column tighter padding */
+            .reg-left { padding: 24px 20px; }
+            .reg-right { padding: 24px 20px; }
+        }
+
+        /* VERY SMALL PHONES */
+        @media (max-width: 360px) {
+            .card-custom { flex: 0 0 84vw; }
+            .header h3 { font-size: 1.25rem; }
         }
     </style>
 </head>

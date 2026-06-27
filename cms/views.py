@@ -31,6 +31,18 @@ from .sentiment import sentiment_analyzer
 from .forms import EventRegistrationForm
 
 
+def normalize_engagement_score(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return 0
+
+    if value <= 1:
+        value *= 100
+
+    return max(0, min(100, round(value)))
+
+
 # =====================
 # ADMIN AUTH HELPER
 # =====================
@@ -112,13 +124,13 @@ def home(request):
     VisitorLog.objects.create(
         page_visited='home',
         visit_duration=10,
-        engagement_score=0.8,
+        engagement_score=80,
     )
 
     avg_score = VisitorLog.objects.aggregate(
         avg=Avg('engagement_score')
     )['avg'] or 0
-    engagement_score = round(float(avg_score) * 100)
+    engagement_score = normalize_engagement_score(avg_score)
 
     context = {
         # Only count Published events in public stats
@@ -202,7 +214,7 @@ def explore(request):
     VisitorLog.objects.create(
         page_visited='explore',
         visit_duration=0,
-        engagement_score=0.5,
+        engagement_score=50,
     )
 
     session_id = get_or_create_session(request)
@@ -695,7 +707,7 @@ def event_detail(request, id):
     VisitorLog.objects.create(
         page_visited=f'event_detail/{id}',
         visit_duration=0,
-        engagement_score=0.5,
+        engagement_score=50,
         visitor_ip=request.META.get('REMOTE_ADDR', ''),
     )
 
@@ -1014,10 +1026,12 @@ def admin_home(request):
     total_visits = VisitorLog.objects.count()
     avg_visit_seconds = VisitorLog.objects.aggregate(avg_duration=Avg('visit_duration'))['avg_duration'] or 0
     avg_time = f"{int(avg_visit_seconds // 60)}m {int(avg_visit_seconds % 60)}s"
-    avg_engagement_score = VisitorLog.objects.aggregate(avg_engagement=Avg('engagement_score'))['avg_engagement'] or 0
-    if avg_engagement_score >= 0.7:
+    avg_engagement_score = normalize_engagement_score(
+        VisitorLog.objects.aggregate(avg_engagement=Avg('engagement_score'))['avg_engagement'] or 0
+    )
+    if avg_engagement_score >= 70:
         engagement_text = 'High'
-    elif avg_engagement_score >= 0.4:
+    elif avg_engagement_score >= 40:
         engagement_text = 'Medium'
     else:
         engagement_text = 'Low'
