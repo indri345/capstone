@@ -366,7 +366,7 @@ class VisitorLog(models.Model):
 
     class Meta:
         db_table = 'visitor_logs'
-        managed = False
+        managed = True
 
     def __str__(self):
         return self.page_visited or ''
