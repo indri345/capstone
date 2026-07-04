@@ -152,33 +152,19 @@
             background: transparent;
         }
 
-        /* SCROLL */
+        /* SCROLL (Vertical Stacked Grid Layout) */
         .scroll-wrap { position: relative; }
         .scroll-container {
-            display: flex; gap: 20px; overflow-x: auto; padding-bottom: 15px;
-            scroll-behavior: smooth; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            padding-bottom: 24px;
         }
-        .scroll-container::-webkit-scrollbar { height: 8px; }
-        .scroll-container::-webkit-scrollbar-thumb { background: rgba(15,61,46,0.15); border-radius: 999px; }
-        .scroll-container::-webkit-scrollbar-track { background: transparent; }
-
-        .scroll-btn {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            width: 42px; height: 42px; border-radius: 999px;
-            border: 1px solid var(--border); background: var(--card);
-            box-shadow: var(--shadow-card);
-            display: grid; place-items: center; cursor: pointer; z-index: 5;
-            transition: all 0.2s ease; opacity: 0; pointer-events: none;
-            color: var(--forest); font-weight: 700;
-        }
-        .scroll-wrap:hover .scroll-btn, .scroll-wrap:focus-within .scroll-btn { opacity: 1; pointer-events: auto; }
-        .scroll-btn:hover { transform: translateY(-50%) scale(1.08); background: var(--forest); color: var(--lime); }
-        .scroll-btn.left { left: -12px; }
-        .scroll-btn.right { right: -12px; }
+        /* Hide scroll buttons since layout is vertical */
+        .scroll-btn { display: none !important; }
 
         /* CARD */
         .card-custom {
-            flex: 0 0 300px;
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
@@ -186,16 +172,8 @@
             box-shadow: var(--shadow-soft);
             transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
             display: flex; flex-direction: column;
-            scroll-snap-align: start;
             position: relative;
-        }
-
-        @media (max-width: 767.98px) {
-            .card-custom { flex-basis: 86%; min-width: 86%; }
-        }
-
-        @media (min-width: 768px) and (max-width: 1023.98px) {
-            .card-custom { flex-basis: 280px; }
+            height: 100%;
         }
         .card-custom:hover { transform: translateY(-6px); box-shadow: var(--shadow-card); border-color: rgba(182,245,0,0.5); }
 
@@ -563,18 +541,9 @@
 
             .section-title { font-size: 1.05rem; margin: 26px 0 12px; }
 
-            /* Cards: show ~1 card per screen so it reads as a swipeable carousel */
-            .scroll-container { gap: 14px; padding-bottom: 12px; }
-            .card-custom { flex: 0 0 78vw; max-width: 320px; }
+            /* Cards: Adjust grid gap for mobile */
+            .scroll-container { gap: 14px; padding-bottom: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
             .card-img { height: 150px; }
-
-            /* Scroll arrows rely on :hover which doesn't exist on touch — always show, shrink & reposition */
-            .scroll-btn {
-                opacity: 1; pointer-events: auto;
-                width: 34px; height: 34px; font-size: 14px;
-            }
-            .scroll-btn.left { left: 2px; }
-            .scroll-btn.right { right: 2px; }
 
             /* Asset/Logo/Video grid: smaller min column so it doesn't overflow */
             #attributes div[style*="grid-template-columns: repeat(auto-fill"] {
@@ -713,23 +682,17 @@
                     <p class="text-muted">{{ event.event_date }}</p>
                     <p class="text-muted">{{ event.event_time }}</p>
 
+                    {% if event.status == 'ongoing' %}
+                        <p class="text-success small" style="margin-top:6px; font-weight:700;">On Progress</p>
+                    {% endif %}
+
                     <!-- RATING -->
-                    {% if event.event_date < today %}
-
-                        {% if event.rating %}
-
-                            <p class="rating">
-                                ⭐ {{ event.rating }}
-                            </p>
-
-                        {% else %}
-
-                            <p class="text-muted small">
-                                Belum ada rating
-                            </p>
-
+                    {% if event.rating %}
+                        <p class="rating">⭐ {{ event.rating }}</p>
+                    {% else %}
+                        {% if event.can_feedback %}
+                            <p class="text-muted small">Belum ada rating</p>
                         {% endif %}
-
                     {% endif %}
 
                     <!-- BUTTONS -->
@@ -744,25 +707,12 @@
                         </button>
 
                         <!-- FEEDBACK -->
-                        {% if event.event_date < today %}
-
-                            {% if event.event_id in rated_events %}
-
-                                <button class="btn btn-secondary btn-sm" disabled>
-                                    Sudah Rating
-                                </button>
-
+                        {% if event.can_feedback %}
+                            {% if event.is_rated_by_session %}
+                                <button class="btn btn-secondary btn-sm" disabled>Sudah Rating</button>
                             {% else %}
-
-                                <button
-                                    type="button"
-                                    class="btn btn-outline-secondary btn-sm"
-                                    onclick="openFeedbackForEvent('{{ event.event_id }}')">
-                                    Feedback
-                                </button>
-
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openFeedbackForEvent('{{ event.event_id }}')">Feedback</button>
                             {% endif %}
-
                         {% endif %}
 
                     </div>
@@ -778,10 +728,12 @@
 
 </div>
 
-       <!-- ================= NEWS ================= -->
+<!-- ================= NEWS ================= -->
 <div class="tab-pane fade" id="news">
 
     {% for edition in news_editions %}
+    {% with edition_news=edition.news.all %}
+    {% if edition_news %}
 
     <div class="section-title">{{ edition.edition_name }}</div>
 
@@ -790,10 +742,10 @@
         <button class="scroll-btn right" type="button" data-scroll="right">›</button>
 
         <div class="scroll-container">
-            {% for news in edition.news.all %}
+            {% for news in edition_news %}
 
             <div class="card-custom">
-                <img src="{% if news.image_url %}{{ news.image_url }}{% else %}https://picsum.photos/400/300?random={{ news.news_id }}{% endif %}"
+                <img src="{% if news.image_file %}{{ news.image_file.url }}{% elif news.image_url %}{{ news.image_url }}{% else %}https://picsum.photos/400/300?random={{ news.news_id }}{% endif %}"
                      class="card-img"
                      data-gdrive="{% if news.image_url %}{{ news.image_url }}{% endif %}"
                      onerror="this.src='https://picsum.photos/400/300?random={{ news.news_id }}'">
@@ -802,7 +754,7 @@
                     <h6>{{ news.title }}</h6>
                     <p class="text-muted">{{ news.created_at|date:"d M Y" }}</p>
                     <div class="card-buttons">
-                        {% if news.image_url %}
+                        {% if news.image_file or news.image_url %}
                         <a href="{% url 'redirect_news' news.news_id %}" class="btn btn-outline-success btn-sm" target="_blank">
                             Buka Poster
                         </a>
@@ -815,7 +767,46 @@
         </div>
     </div>
 
+    {% endif %}
+    {% endwith %}
     {% endfor %}
+
+    <!-- News tanpa edition (edition_id NULL / edition sudah dihapus) -->
+    {% if news_no_edition %}
+
+    <div class="section-title">Tanpa Edisi</div>
+
+    <div class="scroll-wrap">
+        <button class="scroll-btn left" type="button" data-scroll="left">‹</button>
+        <button class="scroll-btn right" type="button" data-scroll="right">›</button>
+
+        <div class="scroll-container">
+            {% for news in news_no_edition %}
+
+            <div class="card-custom">
+                <img src="{% if news.image_file %}{{ news.image_file.url }}{% elif news.image_url %}{{ news.image_url }}{% else %}https://picsum.photos/400/300?random={{ news.news_id }}{% endif %}"
+                     class="card-img"
+                     data-gdrive="{% if news.image_url %}{{ news.image_url }}{% endif %}"
+                     onerror="this.src='https://picsum.photos/400/300?random={{ news.news_id }}'">
+
+                <div class="card-body">
+                    <h6>{{ news.title }}</h6>
+                    <p class="text-muted">{{ news.created_at|date:"d M Y" }}</p>
+                    <div class="card-buttons">
+                        {% if news.image_file or news.image_url %}
+                        <a href="{% url 'redirect_news' news.news_id %}" class="btn btn-outline-success btn-sm" target="_blank">
+                            Buka Poster
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+    </div>
+
+    {% endif %}
 
 </div><!-- /tab-pane#news -->
 
@@ -921,6 +912,8 @@
 
     </div><!-- /tab-content -->
 </div><!-- /container -->
+
+{% include 'cms/footer_contact.html' %}
 
 
 <!-- ══════════════════════════════════════════════
@@ -1075,7 +1068,7 @@
                 </div>
 <div class="reg-f-row">
                     <div class="reg-f-group">
-                        <label class="reg-f-label" for="r-phone">No. HP <span class="opt">(opsional)</span></label>
+                        <label class="reg-f-label" for="r-phone">No. HP <span class="opt"></span></label>
                         <div class="reg-f-wrap">
                             <span class="reg-f-ico">📱</span>
                             <input type="tel" id="r-phone" name="phone" class="reg-f-input" placeholder="08xxxxxxxxxx">

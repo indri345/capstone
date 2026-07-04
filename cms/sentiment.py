@@ -29,15 +29,54 @@ except Exception:
     VADER_AVAILABLE = False
 
 
-POSITIVE_SCORE_2 = ['bagus', 'keren', 'mantap', 'luar biasa', 'puas', 'suka', 'oke banget', 'sangat bagus']
-POSITIVE_SCORE_1 = ['baik', 'cukup bagus', 'lumayan bagus']
+POSITIVE_SCORE_2 = [
+    'bagus', 'keren', 'mantap', 'luar biasa', 'puas', 'suka', 'oke banget', 'sangat bagus',
+    'inspiratif', 'bermanfaat', 'menarik', 'seru', 'menyenangkan', 'interaktif',
+    'informatif', 'membantu', 'memuaskan', 'bagus sekali', 'sangat baik'
+]
+POSITIVE_SCORE_1 = [
+    'baik', 'cukup bagus', 'lumayan bagus',
+    'cukup baik', 'cukup menarik', 'lumayan', 'cukup membantu', 'oke'
+]
 
-NEGATIVE_SCORE_2 = ['jelek', 'buruk', 'mengecewakan', 'kacau']
-NEGATIVE_SCORE_1 = ['kurang', 'tidak bagus', 'tidak puas']
+NEGATIVE_SCORE_2 = [
+    'jelek', 'buruk', 'mengecewakan', 'kacau',
+    'lambat', 'error', 'rusak', 'gagal', 'sulit', 'kesulitan',
+    'bermasalah', 'tidak berfungsi', 'bug', 'crash', 'lemot',
+    'loading lama', 'gangguan', 'tidak bisa', 'susah digunakan',
+    'membosankan', 'kurang menarik', 'tidak jelas', 'membingungkan',
+    'tidak efektif', 'kurang bermanfaat', 'tidak sesuai', 'terlalu lama',
+    'tidak terorganisir', 'kurang interaktif', 'monoton'
+]
+NEGATIVE_SCORE_1 = [
+    'kurang', 'tidak bagus', 'tidak puas',
+    'kurang cepat', 'kurang stabil', 'agak lambat',
+    'sedikit lambat', 'kadang error', 'kadang gagal',
+    'kurang jelas', 'agak membosankan', 'kurang efektif',
+    'biasa saja', 'kurang maksimal', 'kurang baik'
+]
 
 NEUTRAL_ANCHORS = [
     'biasa saja', 'standar', 'tidak ada yang terlalu menarik',
-    'tidak terlalu menarik', 'sesuai jadwal', 'normal', 'seperti biasa'
+    'tidak terlalu menarik', 'sesuai jadwal', 'normal', 'seperti biasa',
+    'cukup baik', 'lumayan', 'sesuai ekspektasi'
+]
+
+QUESTION_INDICATORS = [
+    'apakah ada', 'apakah', 'bagaimana', 'kapan', 'dimana', 'di mana',
+    'siapa', 'kenapa', 'mengapa', 'bisakah', 'adakah'
+]
+
+EXPLICIT_OPINIONS = [
+    'saya merasa', 'menurut saya', 'saya suka', 'saya tidak suka',
+    'menurutku', 'menurut saya acara ini', 'acara ini', 'event ini',
+    'website ini', 'program ini'
+]
+
+IMPROVEMENT_PHRASES = [
+    'perlu peningkatan', 'perlu ditingkatkan', 'bisa lebih baik',
+    'masih bisa ditingkatkan', 'perlu diperbaiki', 'ada yang perlu diperbaiki',
+    'perlu pengembangan', 'bisa lebih maksimal', 'masih kurang optimal'
 ]
 
 STOPWORDS = set([
@@ -90,7 +129,21 @@ class SentimentAnalyzer:
     def _text_contains_any(text: str, phrases: List[str]) -> bool:
         return any(phrase in text for phrase in phrases)
 
-    def predict(self, text: str) -> Tuple[str, float]:
+    @staticmethod
+    def _text_starts_with_any(text: str, phrases: List[str]) -> bool:
+        text_lower = text.lower().strip()
+        return any(text_lower.startswith(phrase) for phrase in phrases)
+
+    @staticmethod
+    def _rating_to_score(rating: int) -> float:
+        if rating == 5: return 1.0
+        elif rating == 4: return 0.5
+        elif rating == 3: return 0.0
+        elif rating == 2: return -0.5
+        elif rating == 1: return -1.0
+        return 0.0
+
+    def predict(self, text: str, rating: int = None) -> Tuple[str, float]:
         # 1. Preprocessing
         cleaned = self.normalize_text(text)
         if not cleaned:
@@ -124,6 +177,15 @@ class SentimentAnalyzer:
             if word in cleaned: neg_score += 2
         for word in NEGATIVE_SCORE_1:
             if word in cleaned: neg_score += 1
+            
+        priority_negatives = [
+            'tidak berfungsi', 'kesulitan', 'tidak bisa', 'gagal', 'error',
+            'tidak sesuai harapan', 'kurang menarik', 'membosankan', 'tidak jelas',
+            'kurang efektif', 'terlalu lama'
+        ]
+        for word in priority_negatives:
+            if word in cleaned:
+                neg_score += 2
 
         rule_score = pos_score - neg_score
 
@@ -170,6 +232,47 @@ class SentimentAnalyzer:
                 confidence = max(0.60, min(0.84, ml_score - 0.15))
         else:
             confidence = max(0.50, min(0.70, ml_score + 0.10))
+
+        text_lower = text.lower().strip()
+        is_question_first = self._text_starts_with_any(text_lower, QUESTION_INDICATORS)
+        has_explicit_opinion = self._text_contains_any(text_lower, EXPLICIT_OPINIONS)
+        
+        is_pure_question = is_question_first and not has_explicit_opinion
+        has_improvement_phrase = self._text_contains_any(text_lower, IMPROVEMENT_PHRASES)
+
+        if is_pure_question:
+            final_sentiment = 'neutral'
+            confidence = 0.50
+        elif has_improvement_phrase:
+            final_sentiment = 'neutral'
+            confidence = 0.53
+
+        if rating is not None and not is_pure_question:
+            text_sentiment = final_sentiment
+            if text_sentiment == 'positive':
+                text_score = confidence
+            elif text_sentiment == 'negative':
+                text_score = -confidence
+            else:
+                text_score = 0.0
+                
+            rating_score = self._rating_to_score(rating)
+            final_score = (text_score * 0.6) + (rating_score * 0.4)
+            
+            if final_score > 0.2:
+                final_sentiment = 'positive'
+            elif final_score < -0.2:
+                final_sentiment = 'negative'
+            else:
+                final_sentiment = 'neutral'
+                
+            if final_sentiment == 'neutral':
+                confidence = 0.50
+            else:
+                confidence = abs(final_score)
+                if (text_sentiment == 'positive' and rating in [1, 2]) or \
+                   (text_sentiment == 'negative' and rating in [4, 5]):
+                    confidence *= 0.8
 
         return final_sentiment, confidence
 

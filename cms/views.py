@@ -3,16 +3,24 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Sum, Avg, Q, Count
+from django.db.models import Sum, Avg, Q, Count, Max
 from django.db import IntegrityError
+from django.db.models import ProtectedError
+from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.utils import timezone
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncQuarter, TruncYear
 import json, uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time
+import os
 from groq import Groq
+import unicodedata
+import logging
+from django.db.models import Sum, Avg, Q, Count, Max, F
+
+logger = logging.getLogger(__name__)
 from .models import (
     Event,
     News,
@@ -31,6 +39,26 @@ from .sentiment import sentiment_analyzer
 from .forms import EventRegistrationForm
 
 
+def _parse_admin_datetime(raw_value, field_label, errors):
+    """
+    Parse a datetime-local input from an admin form (registration_deadline,
+    attendance_open_time, attendance_close_time). Returns a timezone-aware
+    datetime, None (if the field was left blank), or None while appending a
+    human-readable message to `errors` if the value couldn't be parsed —
+    so the admin sees a friendly form error instead of a raw 500.
+    """
+    if not raw_value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw_value)
+        if timezone.is_naive(parsed):
+            parsed = timezone.make_aware(parsed)
+        return parsed
+    except (TypeError, ValueError):
+        errors.append(f"Format '{field_label}' tidak valid. Gunakan format tanggal & waktu yang benar.")
+        return None
+
+
 def normalize_engagement_score(value):
     try:
         value = float(value)
@@ -41,6 +69,45 @@ def normalize_engagement_score(value):
         value *= 100
 
     return max(0, min(100, round(value)))
+
+
+def normalize_email_for_compare(email):
+    """Normalize email for duplicate checking: trim, unicode-normalize, remove invisible characters, lower-case."""
+    if not email:
+        return ''
+    # Normalize unicode forms and strip surrounding whitespace
+    e = unicodedata.normalize('NFKC', email).strip()
+    # Remove common invisible characters (zero-width space, BOM)
+    for ch in ('\u200b', '\u200c', '\u200d', '\ufeff'):
+        e = e.replace(ch, '')
+    # Collapse internal whitespace and lower-case
+    e = ' '.join(e.split()).lower()
+    return e
+
+
+def auto_update_event_statuses():
+    """Auto-transition events from `published` to `ongoing` when start time passed.
+
+    This is a lightweight, idempotent update intended to run at view entry
+    so the public listing reflects events that have started.
+    """
+    now = timezone.now()
+    qs = Event.objects.filter(status=Event.STATUS_PUBLISHED, event_date__isnull=False)
+    updated = []
+    for ev in qs:
+        try:
+            ev_time = ev.event_time if ev.event_time is not None else time(0, 0)
+            ev_dt = datetime.combine(ev.event_date, ev_time)
+            if timezone.is_naive(ev_dt):
+                ev_dt = timezone.make_aware(ev_dt, timezone.get_current_timezone())
+            if now >= ev_dt:
+                ev.status = Event.STATUS_ONGOING
+                ev.save(update_fields=['status'])
+                updated.append(ev.event_id)
+        except Exception:
+            continue
+    if updated:
+        logger.info('Auto-updated events to ongoing: %s', updated)
 
 
 # =====================
@@ -59,8 +126,19 @@ def admin_login_required(view_func):
 # =====================
 # ADMIN LOGIN / LOGOUT
 # =====================
-def admin_login_view(request):
+# Single canonical admin_login (used by url 'admin_login')
+def admin_login(request):
+    # The login modal on home.html submits via fetch() and expects a JSON
+    # response ({'error': ...} or {'redirect': ...}) — not a normal Django
+    # render/redirect. Without this, a wrong password used to render a 200
+    # HTML page that the frontend misread as "success" and redirected the
+    # user to /admin-home/, which then bounced them straight back with no
+    # error ever shown.
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
     if request.session.get('is_admin'):
+        if is_ajax:
+            return JsonResponse({'redirect': '/admin-home/'})
         return redirect('admin_home')
 
     error = None
@@ -69,63 +147,40 @@ def admin_login_view(request):
         password = request.POST.get('password', '').strip()
 
         user = authenticate(request, username=username, password=password)
-
         if user is not None and (user.is_staff or user.is_superuser):
             login(request, user)
             request.session['is_admin'] = True
             request.session['admin_username'] = user.username
+            if is_ajax:
+                return JsonResponse({'redirect': '/admin-home/'})
             return redirect('admin_home')
         else:
             error = 'Username atau password salah, atau akun tidak memiliki akses admin.'
+            if is_ajax:
+                return JsonResponse({'error': error})
 
+    if is_ajax:
+        return JsonResponse({'error': 'Metode request tidak valid.'}, status=400)
     return render(request, 'cms/admin_login.html', {'error': error})
 
 
-# Single canonical admin_login (used by url 'admin_login')
-def admin_login(request):
-    if request.session.get('is_admin'):
-        return redirect('admin_home')
-    error = None
-    if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
-
-        user = authenticate(request, username=username, password=password)
-        if user is not None and (user.is_staff or user.is_superuser):
-            login(request, user)
-            request.session['is_admin'] = True
-            request.session['admin_username'] = user.username
-            return redirect('admin_home')
-        # Fallback hardcoded (dev only)
-        elif username == 'Admin' and password == '1234':
-            request.session['is_admin'] = True
-            request.session.save()
-            return redirect('admin_home')
-        else:
-            error = 'Username atau password salah.'
-    return render(request, 'cms/admin_login.html', {'error': error})
-
-
+# Single canonical admin_logout (used by url 'admin_logout')
 def admin_logout_view(request):
     request.session.flush()
     logout(request)
     return redirect('home')
 
 
-def admin_logout(request):
-    request.session.flush()
-    return redirect('admin_login')
-
-
 # =====================
 # USER PAGES
 # =====================
 def home(request):
-    VisitorLog.objects.create(
-        page_visited='home',
-        visit_duration=10,
-        engagement_score=80,
-    )
+    # NOTE: visit_duration/engagement_score aren't known yet at request time
+    # (they depend on how long/how the visitor actually engages with the
+    # page). We no longer fabricate constant values here — real numbers are
+    # recorded via track_activity() once the frontend reports actual
+    # behavior (time on page, scroll depth, etc).
+    VisitorLog.objects.create(page_visited='home')
 
     avg_score = VisitorLog.objects.aggregate(
         avg=Avg('engagement_score')
@@ -144,13 +199,6 @@ def home(request):
     }
 
     return render(request, "cms/home.html", context)
-
-
-def get_recommended_events(core_name=None):
-    qs = Event.objects.filter(status=Event.STATUS_PUBLISHED)
-    if core_name:
-        qs = qs.filter(core_values__core_value_name=core_name)
-    return qs.distinct()
 
 
 def _recommended_items_for_core_slug(core_slug):
@@ -198,7 +246,6 @@ def get_or_create_session(request):
         session_id = str(uuid.uuid4())
     return session_id
 
-
 BULAN = {
     'januari': 1, 'februari': 2, 'maret': 3, 'april': 4,
     'mei': 5, 'juni': 6, 'juli': 7, 'agustus': 8,
@@ -211,34 +258,42 @@ def parse_edition_date(edition):
 
 
 def explore(request):
-    VisitorLog.objects.create(
-        page_visited='explore',
-        visit_duration=0,
-        engagement_score=50,
-    )
+    # See home() — real visit_duration/engagement_score are recorded via
+    # track_activity() from the frontend, not fabricated here.
+    VisitorLog.objects.create(page_visited='explore')
 
     session_id = get_or_create_session(request)
 
-    # Business Rule: Only Published events show on Explore
-    events = Event.objects.filter(
-        status=Event.STATUS_PUBLISHED
-    ).order_by('-event_date')
+    # Business Rule: Published, Ongoing, and Completed events show on Explore
+    # (matches Event.is_visible_to_participants — ongoing events are the most
+    # relevant to visitors and shouldn't disappear from the public listing).
+    events_qs = Event.objects.filter(
+        status__in=[Event.STATUS_PUBLISHED, Event.STATUS_ONGOING, Event.STATUS_COMPLETED]
+    )
+    events = list(events_qs)
+    today = timezone.localdate()
 
-    for event in events:
-        avg_rating = Feedback.objects.filter(
-            event=event,
-            rating__isnull=False
-        ).aggregate(avg=Avg('rating'))['avg']
+    def sort_event(e):
+        e_date = e.event_date
+        e_time_str = e.event_time.strftime('%H:%M:%S') if e.event_time else '00:00:00'
 
-        if avg_rating:
-            event.rating = round(avg_rating, 1)
+        if not e_date:
+            return (2, 0, e_time_str)
+        elif e_date >= today:
+            return (0, (e_date - today).days, e_time_str)
         else:
-            event.rating = None
+            return (1, -(e_date - today).days, e_time_str)
 
-    rated_events = Feedback.objects.filter(
+    events.sort(key=sort_event)
+
+    # Event.rating is already kept up to date by save_feedback() whenever a
+    # rating is submitted, so it's the single source of truth here — no need
+    # to recompute the average per event (that was a duplicate, N+1 query).
+
+    rated_events = list(Feedback.objects.filter(
         session_id=session_id,
         rating__isnull=False
-    ).values_list('event_id', flat=True)
+    ).values_list('event_id', flat=True))
 
     news_editions = sorted(
         NewsEdition.objects.prefetch_related('news').all(),
@@ -246,15 +301,37 @@ def explore(request):
         reverse=True
     )
 
+    # News tanpa edition (edition_id NULL / edition sudah dihapus) tetap
+    # harus tampil di Explore. Tanpa ini, News jenis ini tidak akan pernah
+    # muncul karena loop di template jalan per-edition
+    # (for edition in news_editions -> for news in edition.news.all).
+    news_no_edition = News.objects.filter(edition__isnull=True).order_by('-created_at')
+
     playbooks = Attribute.objects.filter(attribute_type='playbook')
     posters   = Attribute.objects.filter(attribute_type='poster')
     assets    = Attribute.objects.filter(attribute_type='asset')
     logos     = Attribute.objects.filter(attribute_type='logo')
     videos    = Attribute.objects.filter(attribute_type='video')
 
+    # Annotate events with flags used by template: can_feedback (>=1 hour after start)
+    now = timezone.now()
+    for e in events:
+        e.is_rated_by_session = (e.event_id in rated_events)
+        e.can_feedback = False
+        if e.event_date:
+            ev_time = e.event_time if e.event_time is not None else time(0, 0)
+            try:
+                ev_dt = datetime.combine(e.event_date, ev_time)
+                if timezone.is_naive(ev_dt):
+                    ev_dt = timezone.make_aware(ev_dt, timezone.get_current_timezone())
+                e.can_feedback = now >= (ev_dt + timedelta(hours=1))
+            except Exception:
+                e.can_feedback = (e.event_date < date.today())
+
     context = {
         'events': events,
         'news_editions': news_editions,
+        'news_no_edition': news_no_edition,
         'playbooks': playbooks,
         'posters': posters,
         'assets': assets,
@@ -271,7 +348,6 @@ def explore(request):
         httponly=True, samesite='Lax'
     )
     return response
-
 
 def feedback(request):
     return render(request, 'cms/feedback.html')
@@ -334,7 +410,9 @@ def chat_with_ai(request):
         previous_feedbacks = reversed(previous_feedbacks)
 
         # ================= CONTEXT DATA (EVENTS & NEWS) =================
-        db_events = Event.objects.all().order_by('-event_date')[:5]
+        db_events = Event.objects.filter(
+            status__in=[Event.STATUS_PUBLISHED, Event.STATUS_ONGOING, Event.STATUS_COMPLETED]
+            ).order_by(F('event_date').desc(nulls_last=True))[:5]
         db_news = News.objects.all().order_by('-created_at')[:5]
 
         events_list = []
@@ -367,6 +445,51 @@ def chat_with_ai(request):
         events_context_str = "\n\n".join(events_list) if events_list else "Tidak ada data event."
         news_context_str = "\n\n".join(news_list) if news_list else "Tidak ada data berita."
 
+        db_attributes = Attribute.objects.all().order_by('-created_at')[:5]
+        attributes_list = []
+        for attr in db_attributes:
+            attributes_list.append(
+                f"- ID: {attr.attribute_id}\n"
+                f"  Nama: {attr.attribute_name or 'Tanpa Judul'}\n"
+                f"  Tipe: {attr.attribute_type or 'Tidak diketahui'}\n"
+                f"  Link: /attribute_redirect/{attr.attribute_id}/"
+            )
+        attributes_context_str = "\n\n".join(attributes_list) if attributes_list else "Tidak ada data attribute."
+
+        total_events = Event.objects.filter(status=Event.STATUS_PUBLISHED).count()
+        total_news = News.objects.count()
+        total_attributes = Attribute.objects.count()
+        avg_event_rating = Event.objects.aggregate(avg=Avg('rating'))['avg'] or 0
+
+        sentiment_counts = {
+            'positive': 0,
+            'neutral': 0,
+            'negative': 0,
+        }
+        for row in Feedback.objects.values('sentiment').annotate(count=Count('feedback_id')):
+            sentiment_counts[row['sentiment']] = row['count']
+
+        events_per_core = EventCoreValue.objects.values(
+            'core_value__core_value_name'
+        ).annotate(count=Count('event', distinct=True)).order_by('-count')[:5]
+        top_core_values = []
+        for row in events_per_core:
+            top_core_values.append(
+                f"- {row['core_value__core_value_name']}: {row['count']} event"
+            )
+        top_core_values_str = "\n".join(top_core_values) if top_core_values else "- Tidak ada core value tersedia."
+
+        culture_context_str = (
+            f"Ringkasan Culture Performance:\n"
+            f"- Total event dipublikasikan: {total_events}\n"
+            f"- Total berita: {total_news}\n"
+            f"- Total attribute: {total_attributes}\n"
+            f"- Rata-rata rating event: {round(avg_event_rating, 1)}\n"
+            f"- Sentimen feedback: {sentiment_counts['positive']} positif, {sentiment_counts['neutral']} netral, {sentiment_counts['negative']} negatif\n"
+            f"- Top core values berdasarkan jumlah event:\n"
+            f"{top_core_values_str}"
+        )
+
         current_event_context = ""
         if event:
             current_event_context = (
@@ -398,6 +521,12 @@ def chat_with_ai(request):
 
             "Berikut adalah data berita/news terbaru dari database Pegadaian:\n"
             f"{news_context_str}\n\n"
+
+            "Berikut adalah data attribute terbaru dari website Pegadaian:\n"
+            f"{attributes_context_str}\n\n"
+
+            "Berikut adalah ringkasan Culture Performance yang ditampilkan di website Pegadaian:\n"
+            f"{culture_context_str}\n\n"
 
             "Jika user bertanya di luar Pegadaian "
             "(contoh: politik, game, kesehatan, coding umum, hiburan), "
@@ -509,7 +638,7 @@ def chat_with_ai(request):
         # rating hanya muncul kalau:
         # 1. feedback
         # 2. ada event
-        # 3. event sudah selesai
+        # 3. event sudah berjalan setidaknya 1 jam (bukan sebelum dimulai)
         if is_feedback and event:
 
             already_rated = Feedback.objects.filter(
@@ -518,10 +647,19 @@ def chat_with_ai(request):
                 rating__isnull=False
             ).exists()
 
-            show_rating = (
-                event.event_date < date.today()
-                and not already_rated
-            )
+            show_rating = False
+            if event.event_date:
+                # Build event start datetime (use midnight if time not provided)
+                ev_time = event.event_time if event.event_time is not None else time(0, 0)
+                try:
+                    ev_dt = datetime.combine(event.event_date, ev_time)
+                    if timezone.is_naive(ev_dt):
+                        ev_dt = timezone.make_aware(ev_dt, timezone.get_current_timezone())
+                    # Show rating if at least 1 hour has passed since event start
+                    show_rating = (timezone.now() >= ev_dt + timedelta(hours=1)) and not already_rated
+                except Exception:
+                    # Fallback: if something goes wrong, keep previous behavior (show only after event day)
+                    show_rating = (event.event_date < date.today()) and not already_rated
 
         # ================= RESPONSE =================
 
@@ -609,6 +747,20 @@ def save_feedback(request):
 
         # ================= UPDATE RATING =================
         fb.rating = rating
+
+        # ================= RECALCULATE SENTIMENT =================
+        # Sentimen sebelumnya dihitung dari teks saja (rating belum ada saat
+        # feedback dibuat via chatbot). Sekarang rating sudah tersedia, hitung
+        # ulang dengan sentiment_analyzer.predict(message, rating) supaya
+        # bintang yang diberikan ikut memengaruhi label akhir, dan hasilnya
+        # konsisten dengan yang dipakai di feedback_admin() & culture_performance().
+        try:
+            new_sentiment, new_confidence = sentiment_analyzer.predict(fb.message, rating)
+            fb.sentiment = new_sentiment
+        except Exception:
+            # Kalau prediksi gagal, biarkan sentimen lama (dari saat feedback dibuat)
+            pass
+
         fb.save()
 
         # ================= UPDATE AVG EVENT =================
@@ -643,15 +795,56 @@ def save_feedback(request):
 
 
 def culture_performance(request):
-    return render(request, 'cms/culture_performance.html')
+    """
+    Was previously a bare render() with no context (empty placeholder).
+    Now surfaces real aggregate data: events per core value, and overall
+    feedback sentiment/rating breakdown, which "Culture Performance" is the
+    natural place to report.
+    """
+    events_per_core_value = (
+        EventCoreValue.objects
+        .values('core_value__core_value_name')
+        .annotate(event_count=Count('event', distinct=True))
+        .order_by('-event_count')
+    )
+
+    sentiment_breakdown = (
+        Feedback.objects
+        .values('sentiment')
+        .annotate(count=Count('feedback_id'))
+        .order_by('-count')
+    )
+
+    avg_event_rating = Event.objects.aggregate(avg=Avg('rating'))['avg']
+
+    context = {
+        'core_values': CoreValue.objects.all(),
+        'events_per_core_value': events_per_core_value,
+        'sentiment_breakdown': sentiment_breakdown,
+        'avg_event_rating': round(avg_event_rating, 1) if avg_event_rating else None,
+        'total_feedback': Feedback.objects.count(),
+    }
+    return render(request, 'cms/culture_performance.html', context)
 
 
 def business_performance(request):
-    return render(request, 'cms/business_performance.html')
-
-
-def detail(request, id):
-    return render(request, 'cms/detail.html')
+    """
+    Was previously a bare render() with no context (empty placeholder).
+    Now surfaces real traffic/registration numbers as a starting point for
+    a "Business Performance" view.
+    """
+    context = {
+        'total_visits': VisitorLog.objects.count(),
+        'total_registrations': EventRegistration.objects.count(),
+        'total_events': Event.objects.count(),
+        'active_events': Event.objects.filter(
+            status__in=[Event.STATUS_PUBLISHED, Event.STATUS_ONGOING]
+        ).count(),
+        'avg_engagement_score': normalize_engagement_score(
+            VisitorLog.objects.aggregate(avg=Avg('engagement_score'))['avg'] or 0
+        ),
+    }
+    return render(request, 'cms/business_performance.html', context)
 
 
 # =====================
@@ -711,9 +904,35 @@ def event_detail(request, id):
         visitor_ip=request.META.get('REMOTE_ADDR', ''),
     )
 
+    session_id = get_or_create_session(request)
+    rated_events = list(Feedback.objects.filter(
+        session_id=session_id,
+        rating__isnull=False
+    ).values_list('event_id', flat=True))
+
+    now = timezone.now()
+    event.is_rated_by_session = (event.event_id in rated_events)
+    event.can_feedback = False
+    if event.event_date:
+        ev_time = event.event_time if event.event_time is not None else time(0, 0)
+        try:
+            ev_dt = datetime.combine(event.event_date, ev_time)
+            if timezone.is_naive(ev_dt):
+                ev_dt = timezone.make_aware(ev_dt, timezone.get_current_timezone())
+            event.can_feedback = now >= (ev_dt + timedelta(hours=1))
+        except Exception:
+            event.can_feedback = (event.event_date < date.today())
+
     context = {'event': event}
     context.update(_get_participation_context(request, event))
-    return render(request, 'cms/event_detail.html', context)
+    response = render(request, 'cms/event_detail.html', context)
+    response.set_cookie(
+        'feedback_session', session_id,
+        max_age=60 * 60 * 24 * 30,
+        httponly=True,
+        samesite='Lax'
+    )
+    return response
 
 
 def check_participation_status(request, id):
@@ -810,7 +1029,7 @@ def register_event(request, id):
         # tombol "Daftar" di frontend juga disembunyikan untuk peserta yang
         # sudah teridentifikasi terdaftar, tapi validasi ini tetap berjalan
         # di backend terlepas dari apa yang dikirim klien.
-        submitted_email = (data.get("email") or "").strip().lower()
+        submitted_email = normalize_email_for_compare(data.get("email") or "")
         if submitted_email:
             already_registered = EventRegistration.objects.filter(
                 event_id=event.event_id,
@@ -837,6 +1056,9 @@ def register_event(request, id):
             )
 
         reg = form.save(commit=False)
+        # Ensure saved email matches the same normalization used for checks
+        if reg.email:
+            reg.email = normalize_email_for_compare(reg.email)
         reg.event_id = event.event_id
         reg.event_name = event.event_name
         try:
@@ -884,12 +1106,39 @@ def recommended_content_api(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def track_activity(request):
-    if request.method == "POST":
+    """
+    Real engagement tracking endpoint. Expects the frontend to report actual
+    measured behavior after the visitor is done with a page, e.g.:
+        { "page": "home", "visit_duration": 47, "engagement_score": 0.62 }
+    This replaces the old stub that just printed the payload and discarded
+    it — engagement numbers shown in the admin dashboard now come from here
+    rather than being hardcoded constants.
+    """
+    try:
         data = json.loads(request.body)
-        print("Activity:", data)
-        return JsonResponse({"status": "tracked"})
-    return JsonResponse({"status": "invalid"})
+    except (TypeError, ValueError):
+        return JsonResponse({"status": "invalid", "message": "Invalid JSON body"}, status=400)
+
+    page = (data.get("page") or "").strip()
+    if not page:
+        return JsonResponse({"status": "invalid", "message": "'page' wajib diisi"}, status=400)
+
+    try:
+        visit_duration = max(0, int(data.get("visit_duration") or 0))
+    except (TypeError, ValueError):
+        visit_duration = 0
+
+    engagement_score = normalize_engagement_score(data.get("engagement_score"))
+
+    VisitorLog.objects.create(
+        page_visited=page,
+        visit_duration=visit_duration,
+        engagement_score=engagement_score,
+        visitor_ip=request.META.get('REMOTE_ADDR'),
+    )
+    return JsonResponse({"status": "tracked"})
 
 
 # =====================
@@ -1057,32 +1306,33 @@ def admin_home(request):
     common_words = sentiment_analyzer.extract_common_words(feedback_messages, limit=6)
     common_word_list = [{'word': word, 'count': count} for word, count in common_words]
 
-    event_keywords = {
-        'Culture Workshop 2026': ['culture', 'workshop', '2026'],
-        'Team Building Day': ['team building', 'team', 'building'],
-        'Leadership Seminar': ['leadership', 'seminar'],
-    }
     event_ranking = []
-    for event_name, keywords in event_keywords.items():
-        query = None
-        for keyword in keywords:
-            q = Q(message__icontains=keyword)
-            query = q if query is None else query | q
-        if query is None:
+    event_feedback_stats = (
+        Feedback.objects
+        .filter(event__isnull=False)
+        .values('event__event_id', 'event__event_name')
+        .annotate(
+            total=Count('feedback_id'),
+            positive=Count('feedback_id', filter=Q(sentiment='positive')),
+            negative=Count('feedback_id', filter=Q(sentiment='negative')),
+        )
+        .order_by('-total')
+    )
+
+    for row in event_feedback_stats:
+        if row['total'] == 0:
             continue
-        event_feedback = Feedback.objects.filter(query)
-        total_event = event_feedback.count()
-        positive_event = event_feedback.filter(sentiment='positive').count()
-        negative_event = event_feedback.filter(sentiment='negative').count()
-        if total_event:
-            event_ranking.append({
-                'event': event_name,
-                'total': total_event,
-                'positive': positive_event,
-                'negative': negative_event,
-                'score': round(positive_event / total_event * 100),
-            })
-    event_ranking.sort(key=lambda row: row['score'], reverse=True)
+        score = round(row['positive'] / row['total'] * 100) if row['total'] else 0
+        event_ranking.append({
+            'event_id': row['event__event_id'],
+            'event': row['event__event_name'] or 'Event tidak bernama',
+            'total': row['total'],
+            'positive': row['positive'],
+            'negative': row['negative'],
+            'score': score,
+        })
+
+    event_ranking.sort(key=lambda row: (row['score'], row['total']), reverse=True)
     event_ranking = event_ranking[:5]
 
     total_positive = Feedback.objects.filter(sentiment='positive').count()
@@ -1096,7 +1346,7 @@ def admin_home(request):
     else:
         positive_percent = neutral_percent = negative_percent = 0
 
-    recent_admin_activities = list(AdminActivity.objects.all().order_by('-created_at')[:6])
+    recent_admin_activities = list(AdminActivity.objects.all().order_by('-created_at'))
     recent_feedbacks = list(Feedback.objects.order_by('-created_at')[:10])
 
     def format_activity_time(dt):
@@ -1119,7 +1369,7 @@ def admin_home(request):
         return dt.strftime('%d %b %Y %H:%M')
 
     recent_admin_activities_data = []
-    for activity in reversed(recent_admin_activities):
+    for activity in recent_admin_activities:
         recent_admin_activities_data.append({
             'icon': '📝',
             'title': activity.activity,
@@ -1171,26 +1421,47 @@ def admin_home(request):
 @admin_login_required
 def explore_admin(request):
     # Admin sees ALL events regardless of status
-    events = Event.objects.all().order_by('-event_date')
+    events = list(Event.objects.all().order_by('-event_date'))
+    news_items = list(News.objects.all().order_by('-created_at'))
+    attributes = list(Attribute.objects.all().order_by('-created_at'))
     today = date.today()
 
+    # ── Batched view counts / last-viewed timestamps ──────────────
+    # One aggregate query per content type instead of 2 queries per item.
+    view_stats = {
+        row['page_visited']: {'views': row['views'], 'last_viewed': row['last_viewed']}
+        for row in VisitorLog.objects.filter(
+            page_visited__in=(
+                [f'event_detail/{e.event_id}' for e in events]
+                + [f'news_detail/{n.news_id}' for n in news_items]
+                + [f'attribute_detail/{a.attribute_id}' for a in attributes]
+            )
+        ).values('page_visited').annotate(
+            views=Count('log_id'),
+            last_viewed=Max('visited_at'),
+        )
+    }
+
+    # ── Batched registrant counts (one GROUP BY instead of N queries) ──
+    registrant_counts = {
+        row['event_id']: row['count']
+        for row in EventRegistration.objects.values('event_id').annotate(count=Count('registration_id'))
+    }
+
     for event in events:
-        event.views = VisitorLog.objects.filter(
-            page_visited=f'event_detail/{event.event_id}'
-        ).count()
-        event.registrant_count = EventRegistration.objects.filter(event_id=event.event_id).count()
+        stats = view_stats.get(f'event_detail/{event.event_id}', {})
+        event.views = stats.get('views', 0)
+        event.registrant_count = registrant_counts.get(event.event_id, 0)
 
-    news_items = News.objects.all().order_by('-created_at')
     for n in news_items:
-        n.views = VisitorLog.objects.filter(page_visited=f'news_detail/{n.news_id}').count()
-        last_view = VisitorLog.objects.filter(page_visited=f'news_detail/{n.news_id}').order_by('-visited_at').first()
-        n.last_viewed = last_view.visited_at if last_view else None
+        stats = view_stats.get(f'news_detail/{n.news_id}', {})
+        n.views = stats.get('views', 0)
+        n.last_viewed = stats.get('last_viewed')
 
-    attributes = Attribute.objects.all().order_by('-created_at')
     for a in attributes:
-        a.views = VisitorLog.objects.filter(page_visited=f'attribute_detail/{a.attribute_id}').count()
-        last_view = VisitorLog.objects.filter(page_visited=f'attribute_detail/{a.attribute_id}').order_by('-visited_at').first()
-        a.last_viewed = last_view.visited_at if last_view else None
+        stats = view_stats.get(f'attribute_detail/{a.attribute_id}', {})
+        a.views = stats.get('views', 0)
+        a.last_viewed = stats.get('last_viewed')
 
     context = {
         'events': events,
@@ -1207,6 +1478,8 @@ def redirect_news(request, id):
         page_visited=f'news_detail/{id}',
         visitor_ip=request.META.get('REMOTE_ADDR')
     )
+    if news_item.image_file:
+        return redirect(news_item.image_file.url)
     return redirect(news_item.image_url if news_item.image_url else '/explore/')
 
 
@@ -1237,27 +1510,59 @@ def admin_add_event(request):
         image_file = request.FILES.get('image')
         image_path = None
         if image_file:
-            fs = FileSystemStorage(location='media/events')
+            media_dir = os.path.join(settings.MEDIA_ROOT or 'media', 'events')
+            os.makedirs(media_dir, exist_ok=True)
+            fs = FileSystemStorage(location=media_dir)
             filename = fs.save(image_file.name, image_file)
             image_path = f'events/{filename}'
 
-        if event_name:
+        errors = []
+        parsed_event_date = None
+        if event_date:
+            try:
+                parsed_event_date = date.fromisoformat(event_date)
+            except (TypeError, ValueError):
+                errors.append("Format 'Tanggal Event' tidak valid.")
+
+        parsed_registration_deadline = _parse_admin_datetime(registration_deadline, 'Registration Deadline', errors)
+        parsed_attendance_open_time = _parse_admin_datetime(attendance_open_time, 'Attendance Open Time', errors)
+        parsed_attendance_close_time = _parse_admin_datetime(attendance_close_time, 'Attendance Close Time', errors)
+
+        if capacity:
+            try:
+                capacity = int(capacity)
+            except (TypeError, ValueError):
+                errors.append("'Capacity' harus berupa angka.")
+                capacity = None
+
+        if not event_name:
+            errors.append("'Nama Event' wajib diisi.")
+
+        if not errors:
             Event.objects.create(
                 event_name=event_name,
                 description=description or None,
                 location=location or None,
-                event_date=date.fromisoformat(event_date) if event_date else None,
+                event_date=parsed_event_date,
                 event_time=event_time or None,
                 image_url=image_path,
                 status=status,
-                capacity=int(capacity) if capacity else None,
+                capacity=capacity or None,
                 person_in_charge=person_in_charge,
-                registration_deadline=registration_deadline,
-                attendance_open_time=attendance_open_time,
-                attendance_close_time=attendance_close_time,
+                registration_deadline=parsed_registration_deadline,
+                attendance_open_time=parsed_attendance_open_time,
+                attendance_close_time=parsed_attendance_close_time,
             )
             log_admin_activity(f"Event '{event_name}' dibuat dengan status '{status}'")
             return redirect('admin_explore')
+
+        return render(request, 'cms/event_form.html', {
+            'action': 'Tambah Event',
+            'event': None,
+            'form_action': 'admin_add_event',
+            'status_choices': Event.STATUS_CHOICES,
+            'errors': errors,
+        })
 
     return render(request, 'cms/event_form.html', {
         'action': 'Tambah Event',
@@ -1278,29 +1583,57 @@ def admin_edit_event(request, id):
         event.status       = request.POST.get('status', event.status)
         event.person_in_charge = request.POST.get('person_in_charge', '').strip() or event.person_in_charge
 
+        errors = []
+
         capacity = request.POST.get('capacity')
-        event.capacity = int(capacity) if capacity else event.capacity
+        if capacity:
+            try:
+                event.capacity = int(capacity)
+            except (TypeError, ValueError):
+                errors.append("'Capacity' harus berupa angka.")
 
         reg_dl = request.POST.get('registration_deadline')
         att_open = request.POST.get('attendance_open_time')
         att_close = request.POST.get('attendance_close_time')
         if reg_dl:
-            event.registration_deadline = reg_dl
+            parsed = _parse_admin_datetime(reg_dl, 'Registration Deadline', errors)
+            if parsed is not None:
+                event.registration_deadline = parsed
         if att_open:
-            event.attendance_open_time = att_open
+            parsed = _parse_admin_datetime(att_open, 'Attendance Open Time', errors)
+            if parsed is not None:
+                event.attendance_open_time = parsed
         if att_close:
-            event.attendance_close_time = att_close
+            parsed = _parse_admin_datetime(att_close, 'Attendance Close Time', errors)
+            if parsed is not None:
+                event.attendance_close_time = parsed
 
         event_date = request.POST.get('event_date')
         event_time = request.POST.get('event_time')
 
+        if event_date:
+            try:
+                event.event_date = date.fromisoformat(event_date)
+            except (TypeError, ValueError):
+                errors.append("Format 'Tanggal Event' tidak valid.")
+
+        if errors:
+            return render(request, 'cms/event_form.html', {
+                'action': 'Edit Event',
+                'event': event,
+                'form_action': 'admin_edit_event',
+                'status_choices': Event.STATUS_CHOICES,
+                'errors': errors,
+            })
+
         image_file = request.FILES.get('image')
         if image_file:
-            fs = FileSystemStorage(location='media/events')
+            media_dir = os.path.join(settings.MEDIA_ROOT or 'media', 'events')
+            os.makedirs(media_dir, exist_ok=True)
+            fs = FileSystemStorage(location=media_dir)
             filename = fs.save(image_file.name, image_file)
             event.image_url = f'events/{filename}'
 
-        event.event_date = date.fromisoformat(event_date) if event_date else event.event_date
         event.event_time = event_time or event.event_time
         event.save()
         log_admin_activity(f"Event '{old_name}' diperbarui → '{event.event_name}' (status: {event.status})")
@@ -1319,8 +1652,15 @@ def admin_delete_event(request, id):
     if request.method == 'POST':
         event = get_object_or_404(Event, event_id=id)
         event_name = event.event_name
-        event.delete()
-        log_admin_activity(f"Event '{event_name}' dihapus")
+        try:
+            event.delete()
+            log_admin_activity(f"Event '{event_name}' dihapus")
+        except ProtectedError:
+            messages.error(
+                request,
+                f"Event '{event_name}' tidak bisa dihapus karena sudah punya peserta terdaftar. "
+                f"Gunakan status 'Archived' untuk menonaktifkannya tanpa menghapus data peserta."
+            )
     return redirect('admin_explore')
 
 
@@ -1456,51 +1796,54 @@ def admin_delete_attribute(request, id):
 
 @admin_login_required
 def feedback_admin(request):
-    selected_event = request.GET.get('event', 'all')
+    selected_events = request.GET.getlist('event')
+    if not selected_events:
+        selected_events = ['all']
     selected_sentiment = request.GET.get('sentiment', 'all')
+    search_query = request.GET.get('search', '').strip()
     page_number = request.GET.get('page', 1)
-
-    event_options = list(Event.objects.order_by('event_name').values_list('event_name', flat=True))
-
-    def build_event_query(event_name):
-        tokens = [token.strip() for token in event_name.lower().split() if len(token.strip()) > 2]
-        query = None
-        for token in tokens:
-            q = Q(message__icontains=token)
-            query = q if query is None else query | q
-        return query
-
-    def detect_event(message):
-        text = message.lower()
-        for event_name in event_options:
-            if not event_name:
-                continue
-            lower_name = event_name.lower()
-            if lower_name in text:
-                return event_name
-            for token in lower_name.split():
-                if len(token) > 2 and token in text:
-                    return event_name
-        return 'General'
+    # Use event FK filtering. Provide event options as dicts with id/name for template.
+    event_qs = Event.objects.filter(status__in=['completed', 'archived']).order_by('event_name')
+    event_options = list(event_qs.values('event_id', 'event_name'))
 
     base_qs = Feedback.objects.order_by('-created_at')
 
-    if selected_event != 'all' and selected_event in event_options:
-        query = build_event_query(selected_event)
-        if query is not None:
-            base_qs = base_qs.filter(query)
+    # Filter by selected event(s) using FK. 'General' means event is null.
+    if selected_events and 'all' not in selected_events:
+        q_filter = Q()
+        for evt in selected_events:
+            if evt == 'General':
+                q_filter |= Q(event__isnull=True)
+            else:
+                try:
+                    ev_id = int(evt)
+                    q_filter |= Q(event__event_id=ev_id)
+                except Exception:
+                    # ignore invalid values
+                    continue
+        base_qs = base_qs.filter(q_filter)
+
+    # Separate `if` (not `elif`) so event filter and text search can combine —
+    # admin should be able to filter by event AND search text at the same time.
+    if search_query:
+        base_qs = base_qs.filter(message__icontains=search_query)
 
     all_feedbacks = list(base_qs)
     total_positive = total_neutral = total_negative = 0
     feedback_entries = []
 
     for fb in all_feedbacks:
-        confidence = None
+        # Always get a real confidence score from the model — fb.sentiment
+        # (when present) stays the authoritative label since it's the value
+        # recalculated with rating in save_feedback() and used consistently
+        # elsewhere (culture_performance, etc), but the confidence % shown
+        # here must come from the model, not a fabricated 100%.
         try:
-            pred_sentiment, confidence = sentiment_analyzer.predict(fb.message)
+            predicted_sentiment, confidence = sentiment_analyzer.predict(fb.message, fb.rating)
         except Exception:
-            pred_sentiment = 'neutral'
-            confidence = 0.50
+            predicted_sentiment, confidence = 'neutral', 0.50
+
+        pred_sentiment = fb.sentiment or predicted_sentiment
 
         if pred_sentiment == 'positive':
             total_positive += 1
@@ -1511,12 +1854,11 @@ def feedback_admin(request):
 
         if selected_sentiment == 'all' or selected_sentiment == pred_sentiment:
             sentiment_text = f"{pred_sentiment.capitalize()} ({round(confidence * 100)}%)"
-            fb.sentiment = pred_sentiment
             feedback_entries.append({
                 'comment': fb.message,
                 'time': fb.created_at.strftime('%d %b %Y %H:%M'),
                 'user': fb.session_id or 'Anonymous',
-                'event': detect_event(fb.message),
+                'event': fb.event.event_name if fb.event else 'General',
                 'sentiment': sentiment_text,
                 'rating': fb.rating if fb.rating is not None else 'N/A',
                 'platform': fb.source_platform.capitalize(),
@@ -1542,9 +1884,11 @@ def feedback_admin(request):
 
     context = {
         'feedbacks': page_obj,
-        'page_obj': page_obj,
-        'selected_event': selected_event,
+        'page_obj': paginator.get_page(page_number),
+        'selected_events': selected_events,
+        'selected_event': selected_events[0] if selected_events else 'all',
         'selected_sentiment': selected_sentiment,
+        'search_query': search_query,
         'positive': total_positive,
         'neutral': total_neutral,
         'negative': total_negative,
@@ -1691,16 +2035,28 @@ def admin_attendance_list(request):
     # ---------- 1) ATTENDANCE VERIFICATION (tabel) ----------
     current_status = request.GET.get('status', '').strip()
 
-    qs = Attendance.objects.select_related('event_registration').order_by('-attendance_timestamp')
+    registrations = EventRegistration.objects.prefetch_related('attendances').order_by('-registered_at')
     if current_status:
-        qs = qs.filter(status=current_status)
+        if current_status == 'not_attended':
+            registrations = registrations.filter(attendances__isnull=True)
+        else:
+            registrations = registrations.filter(attendances__status=current_status)
+
+    attendances_data = []
+    for reg in registrations:
+        att = reg.attendances.order_by('-attendance_timestamp').first()
+        attendances_data.append({'reg': reg, 'att': att})
 
     summary = {
-        'total':    Attendance.objects.count(),
+        'total':    EventRegistration.objects.count(),
         'pending':  Attendance.objects.filter(status=Attendance.STATUS_PENDING).count(),
         'verified': Attendance.objects.filter(status=Attendance.STATUS_VERIFIED).count(),
         'rejected': Attendance.objects.filter(status=Attendance.STATUS_REJECTED).count(),
+        'not_attended': EventRegistration.objects.filter(attendances__isnull=True).count(),
     }
+
+    status_choices = list(Attendance.STATUS_CHOICES)
+    status_choices.append(('not_attended', 'Belum Absen'))
 
     # ---------- 2) ATTENDANCE ANALYTICS (Step 8) ----------
     period  = request.GET.get('period', 'monthly')
@@ -1795,10 +2151,10 @@ def admin_attendance_list(request):
     # ---------- CONTEXT GABUNGAN ----------
     context = {
         # Attendance Verification
-        'attendances':    qs,
+        'attendances':    attendances_data,
         'summary':        summary,
         'current_status': current_status,
-        'status_choices': Attendance.STATUS_CHOICES,
+        'status_choices': status_choices,
 
         # Attendance Analytics (Step 8)
         'period': period,
@@ -1857,3 +2213,77 @@ def admin_reject_attendance(request, attendance_id):
         att.save()
         log_admin_activity(f"Attendance #{attendance_id} ({att.participant_email}) ditolak")
     return redirect('admin_attendance')
+
+def submit_contact_us(request):
+    from django.http import JsonResponse
+    if request.method == 'POST':
+        full_name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = request.POST.get('message')
+        
+        if not full_name or not email or not message:
+            return JsonResponse({'success': False, 'message': 'All fields are required.'})
+            
+        from .models import ContactUs
+        from django.utils import timezone
+        
+        ContactUs.objects.create(
+            full_name=full_name,
+            email=email,
+            message=message,
+            status='new',
+            created_at=timezone.now()
+        )
+        return JsonResponse({'success': True, 'message': 'Thank you! Your message has been sent.'})
+        
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'})
+
+@admin_login_required
+def admin_contact_tracking(request):
+    from .models import ContactUs
+    from django.db.models import Q, F
+    
+    query = request.GET.get('q', '')
+    
+    # Exclude those without created_at if any, but order by created_at desc is fine.
+    # The existing table might have nulls if it was an old table, but recent ones won't.
+    contacts = ContactUs.objects.all().order_by(F('created_at').desc(nulls_last=True))
+    
+    if query:
+        contacts = contacts.filter(
+            Q(full_name__icontains=query) | Q(email__icontains=query)
+        )
+        
+    context = {
+        'contacts': contacts,
+        'search_query': query,
+        'active_menu': 'contact_tracking',
+    }
+    return render(request, 'cms/admin_contact_tracking.html', context)
+
+@admin_login_required
+def admin_delete_contact(request, contact_id):
+    from .models import ContactUs
+    if request.method == 'POST':
+        contact = get_object_or_404(ContactUs, id=contact_id)
+        log_admin_activity(f"Contact Us record dari {contact.full_name} dihapus")
+        contact.delete()
+    return redirect('admin_contact_tracking')
+
+@admin_login_required
+def admin_update_contact_status(request, contact_id):
+    from .models import ContactUs
+    from django.utils import timezone
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        contact = get_object_or_404(ContactUs, id=contact_id)
+        if status in ['Read', 'Replied', 'Unread']:
+            contact.status = status
+            if status == 'Replied':
+                contact.replied_at = timezone.now()
+                pic_name = request.POST.get('pic')
+                if pic_name:
+                    contact.pic = pic_name.strip()
+            contact.save()
+            log_admin_activity(f"Status kontak dari {contact.full_name} diubah menjadi {status}")
+    return redirect('admin_contact_tracking')

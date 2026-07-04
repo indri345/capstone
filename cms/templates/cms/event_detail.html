@@ -823,6 +823,15 @@
                     {% if event.is_attendance_open and participation.code == 'registered' %}
                     <a href="{% url 'submit_attendance' event.event_id %}" class="btn-primary-lime">Isi Absensi →</a>
                     {% endif %}
+                    {% if participation.code == 'attendance_verified' %}
+                        {% if event.is_rated_by_session %}
+                            <button type="button" class="btn btn-secondary btn-sm" disabled>Sudah Rating</button>
+                        {% else %}
+                            <button type="button" class="btn-primary-lime" onclick="openFeedbackForEvent({{ event.event_id }})">
+                                Beri Feedback →
+                            </button>
+                        {% endif %}
+                    {% endif %}
                     {% if request.GET.source == 'admin' %}
                     <a href="/admin-explore/" class="btn-ghost-white">Back to Admin</a>
                     {% else %}

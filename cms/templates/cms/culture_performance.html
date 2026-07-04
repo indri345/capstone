@@ -755,6 +755,367 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ================= HUB HERO SECTION ================= */
+        .hero-hub {
+            background: linear-gradient(135deg, var(--forest) 0%, #1a4a38 100%);
+            border-radius: var(--radius-lg);
+            padding: 50px 40px;
+            color: white;
+            margin: 30px 0 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .hero-hub::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -50px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(182, 245, 0, 0.1);
+        }
+
+        .hero-hub-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+        }
+
+        .hero-hub h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+            color: white;
+        }
+
+        .hero-hub p {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-hub-primary {
+            background: var(--lime);
+            color: var(--ink);
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-hub-primary:hover {
+            background: #C8FF33;
+            transform: translateY(-2px);
+            color: var(--ink);
+        }
+
+        .btn-hub-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn-hub-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .hero-hub-image {
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+            width: 35%;
+        }
+
+        .hero-hub-image img {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 900px) {
+            .hero-hub {
+                flex-direction: column;
+                padding: 40px 24px;
+            }
+
+            .hero-hub-image {
+                width: 100%;
+                margin-top: 20px;
+            }
+        }
+
+        /* ================= COMPREHENSIVE PROGRAMS CARDS ================= */
+        .program-hub-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        @media (max-width: 992px) {
+            .program-hub-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .program-hub-card {
+            background: var(--card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .program-hub-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card);
+            border-color: rgba(182, 245, 0, 0.4);
+        }
+
+        .ph-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ph-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+
+        .ph-attributes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-top: 1px dashed var(--border);
+            padding-top: 16px;
+        }
+
+        .ph-chip {
+            background: rgba(182, 245, 0, 0.15);
+            color: var(--forest);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(182, 245, 0, 0.3);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* ================= MEDIA SECTION ================= */
+        .media-hub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+
+        @media (max-width: 900px) {
+            .media-hub-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .media-player-card {
+            background: var(--card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .media-player-card h6 {
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+
+        .yt-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: var(--radius-sm);
+        }
+
+        .yt-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ================= TIMELINE ================= */
+        .timeline-container {
+            margin: 20px 0 50px;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            width: 3px;
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 4px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--lime);
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--forest);
+            margin-bottom: 4px;
+            background: var(--lime-soft);
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .timeline-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-soft);
+            margin-top: 8px;
+        }
+
+        .timeline-content h6 {
+            margin: 0 0 6px;
+            font-weight: 700;
+        }
+
+        .timeline-content p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ================= DOWNLOADS ================= */
+        .downloads-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 900px) {
+            .downloads-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .download-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .download-card:hover {
+            border-color: var(--lime);
+            background: #fafdf7;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .download-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(15, 61, 46, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--forest);
+        }
+
+        .download-info {
+            flex-grow: 1;
+        }
+
+        .download-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .download-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .download-action {
+            color: var(--lime);
+        }
     </style>
 </head>
 
@@ -787,48 +1148,175 @@
 
     <div class="container">
 
-        <!-- PAGE TITLE -->
-        <div class="page-title-wrap reveal">
-            <div class="page-eyebrow">📊 Culture Analytics</div>
-            <h1 class="page-title">Culture Performance</h1>
-            <p class="page-subtitle">Pantau metrik dan analytics budaya organisasi Pegadaian secara real-time, dari
-                kanal cabang hingga inisiatif lintas unit.</p>
-        </div>
-
-        <!-- METRIC BENTO -->
-        <div class="metric-bento reveal">
-            <div class="metric-cell">
-                <div class="m-icon">📡</div>
-                <div class="m-value">7</div>
-                <div class="m-label">Dashboard live dipantau</div>
+        <!-- HERO SECTION -->
+        <div class="hero-hub reveal">
+            <div class="hero-hub-content">
+                <h1>Pegadaian Culture Performance</h1>
+                <p>Sebagai Insan Pegadaian, setiap langkah kita mencerminkan budaya perusahaan. Jelajahi nilai-nilai
+                    inti, ikuti program transformasi budaya, dan bersama wujudkan lingkungan kerja yang unggul serta
+                    berdaya saing tinggi.</p>
+                <div class="hero-buttons">
+                    <a href="#core-programs" class="btn-hub-primary">Explore Programs</a>
+                    <a href="#dashboard-section" class="btn-hub-secondary">View Dashboard</a>
+                </div>
             </div>
-            <div class="metric-cell" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#explanationModal"
-                data-title="✨ Standar Pelayanan 3S (Senyum, Salam, Sapa)"
-                data-content='<p class="mb-4"><strong>3S (Senyum, Salam, Sapa)</strong> merupakan pilar utama standar pelayanan di outlet Pegadaian untuk mewujudkan pelayanan yang hangat, ramah, dan profesional bagi setiap nasabah:</p><div class="d-flex flex-column gap-3"><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">😊</span><div><strong style="color: var(--forest-2); font-size: 14px;">1. Senyum</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Memberikan ekspresi wajah yang hangat dan tulus sejak nasabah pertama kali masuk ke area outlet.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">🙏</span><div><strong style="color: var(--forest-2); font-size: 14px;">2. Salam</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Mengucapkan salam sopan sesuai waktu (pagi/siang/sore) untuk menghormati kedatangan nasabah.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">👋</span><div><strong style="color: var(--forest-2); font-size: 14px;">3. Sapa</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Menyapa nama nasabah (jika sudah tahu) atau menawarkan bantuan dengan nada bicara yang sopan dan jelas.</p></div></div></div>'
-                title="Klik untuk melihat penjelasan 3S">
-                <div class="m-icon">🏢</div>
-                <div class="m-value">3S</div>
-                <div class="m-label">Standar layanan outlet</div>
-            </div>
-            <div class="metric-cell" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#explanationModal"
-                data-title="🔁 Program Budaya Kerja Gerakan 5R"
-                data-content='<p class="mb-4"><strong>Gerakan 5R</strong> merupakan program budaya kerja yang dilaksanakan oleh seluruh Insan Pegadaian secara rutin untuk memelihara ketertiban, kebersihan, dan kedisiplinan di tempat kerja:</p><div class="p-3 mb-3" style="background: rgba(182, 245, 0, 0.08); border-radius: var(--radius-sm); border: 1px solid rgba(182, 245, 0, 0.3);"><span class="fw-bold" style="color: var(--forest);">Prinsip 5R meliputi:</span><div class="row mt-3 g-2"><div class="col-6 col-sm-4 text-center p-2"><div class="fw-bold text-success-dark">1. Ringkas</div><small class="text-muted">Memilah barang penting</small></div><div class="col-6 col-sm-4 text-center p-2"><div class="fw-bold text-success-dark">2. Rapi</div><small class="text-muted">Menyimpan barang teratur</small></div><div class="col-6 col-sm-4 text-center p-2"><div class="fw-bold text-success-dark">3. Resik</div><small class="text-muted">Membersihkan area kerja</small></div><div class="col-6 col-sm-6 text-center p-2"><div class="fw-bold text-success-dark">4. Rawat</div><small class="text-muted">Standardisasi & konsistensi</small></div><div class="col-6 col-sm-6 text-center p-2"><div class="fw-bold text-success-dark">5. Rajin</div><small class="text-muted">Disiplin membiasakan 5R</small></div></div></div><p class="text-muted small" style="font-size: 13px; line-height: 1.6;">Penerapan prinsip ini ditujukan terhadap agunan, sarana, prasarana kerja, serta area pendukung lainnya secara berkala untuk menciptakan lingkungan kerja yang aman dan produktif.</p>'
-                title="Klik untuk melihat penjelasan 5R">
-                <div class="m-icon">🔁</div>
-                <div class="m-value">5R</div>
-                <div class="m-label">Gerakan budaya tahunan</div>
-            </div>
-            <div class="metric-cell">
-                <div class="m-icon">🚀</div>
-                <div class="m-value">1</div>
-                <div class="m-label">Inisiatif berjalan</div>
+            <div class="hero-hub-image">
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                    alt="Culture Hub">
             </div>
         </div>
 
-        <!-- DASHBOARDS -->
-        <div class="section-heading reveal">
-            <h5>Culture Analytics</h5>
+        <!-- CORE PROGRAMS SECTION -->
+        <div class="section-heading reveal" id="core-programs">
+            <h5>Core Programs</h5>
             <div class="section-line"></div>
+        </div>
+        <div class="program-hub-grid reveal">
+
+            <!-- 1. Brilian Way -->
+            <div class="program-hub-card">
+                <div class="ph-title">1. Brilian Way</div>
+                <p class="ph-desc">Brilian Way merupakan fondasi utama budaya kerja Pegadaian yang menjadi pedoman
+                    perilaku seluruh insan perusahaan. Program ini menanamkan nilai Integrity, Collaborative,
+                    Accountability, Growth Mindset, dan Customer Focus sebagai dasar dalam bekerja, berinteraksi, dan
+                    mengambil keputusan.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Integrity</span>
+                    <span class="ph-chip">Teamwork</span>
+                    <span class="ph-chip">Responsibility</span>
+                    <span class="ph-chip">Adaptability</span>
+                    <span class="ph-chip">Service Excellence</span>
+                </div>
+            </div>
+
+            <!-- 2. 3S (Senyum, Salam, Sapa) -->
+            <div class="program-hub-card">
+                <div class="ph-title">2. 3S (Senyum, Salam, Sapa)</div>
+                <p class="ph-desc">Program 3S bertujuan membangun budaya pelayanan yang hangat, ramah, dan profesional
+                    melalui kebiasaan Senyum, Salam, dan Sapa. Program ini menjadi dasar dalam menciptakan pengalaman
+                    positif bagi nasabah dan memperkuat hubungan interpersonal di lingkungan kerja.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Hospitality</span>
+                    <span class="ph-chip">Communication</span>
+                    <span class="ph-chip">Customer Care</span>
+                </div>
+            </div>
+
+            <!-- 3. Gerakan 5R -->
+            <div class="program-hub-card">
+                <div class="ph-title">3. Gerakan 5R</div>
+                <p class="ph-desc">Gerakan 5R berfokus pada pembentukan lingkungan kerja yang tertata, efisien, dan
+                    nyaman. Melalui Ringkas, Rapi, Resik, Rawat, dan Rajin, Pegadaian mendorong terciptanya disiplin
+                    kerja yang mendukung produktivitas dan kualitas operasional.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Discipline</span>
+                    <span class="ph-chip">Cleanliness</span>
+                    <span class="ph-chip">Efficiency</span>
+                    <span class="ph-chip">Consistency</span>
+                </div>
+            </div>
+
+            <!-- 4. Leader as Role Model -->
+            <div class="program-hub-card">
+                <div class="ph-title">4. Leader as Role Model</div>
+                <p class="ph-desc">Program ini menekankan pentingnya peran pemimpin sebagai contoh nyata dalam
+                    menjalankan budaya perusahaan. Seorang leader diharapkan menjadi role model dalam integritas,
+                    pengambilan keputusan, komunikasi, dan pengembangan tim.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Leadership</span>
+                    <span class="ph-chip">Decision Making</span>
+                    <span class="ph-chip">Mentorship</span>
+                    <span class="ph-chip">Accountability</span>
+                </div>
+            </div>
+
+            <!-- 5. Culture Agent / Agent of Change -->
+            <div class="program-hub-card">
+                <div class="ph-title">5. Culture Agent / Agent of Change</div>
+                <p class="ph-desc">Culture Agent adalah penggerak utama transformasi budaya di lingkungan kerja. Mereka
+                    berperan sebagai katalis perubahan, membantu menyebarkan nilai perusahaan, dan memastikan
+                    implementasi budaya berjalan secara konsisten di seluruh unit.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Initiative</span>
+                    <span class="ph-chip">Influence</span>
+                    <span class="ph-chip">Adaptability</span>
+                    <span class="ph-chip">Collaboration</span>
+                </div>
+            </div>
+
+            <!-- 6. Employee Engagement Program -->
+            <div class="program-hub-card">
+                <div class="ph-title">6. Employee Engagement Program</div>
+                <p class="ph-desc">Program ini dirancang untuk meningkatkan keterlibatan pegawai melalui berbagai
+                    aktivitas internal, kolaborasi tim, dan pengembangan hubungan kerja. Tujuannya adalah menciptakan
+                    lingkungan kerja yang lebih positif, aktif, dan produktif.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Team Bonding</span>
+                    <span class="ph-chip">Participation</span>
+                    <span class="ph-chip">Motivation</span>
+                    <span class="ph-chip">Collaboration</span>
+                </div>
+            </div>
+
+            <!-- 7. Customer Centric Movement -->
+            <div class="program-hub-card">
+                <div class="ph-title">7. Customer Centric Movement</div>
+                <p class="ph-desc">Program ini membangun pola pikir yang berfokus pada kebutuhan nasabah dengan
+                    mengutamakan empati, kecepatan, dan ketepatan dalam memberikan layanan. Seluruh proses kerja
+                    diarahkan untuk menciptakan pengalaman terbaik bagi pelanggan.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Empathy</span>
+                    <span class="ph-chip">Responsiveness</span>
+                    <span class="ph-chip">Problem Solving</span>
+                    <span class="ph-chip">Service Quality</span>
+                </div>
+            </div>
+
+            <!-- 8. Innovation Culture -->
+            <div class="program-hub-card">
+                <div class="ph-title">8. Innovation Culture</div>
+                <p class="ph-desc">Budaya inovasi mendorong setiap insan Pegadaian untuk berpikir kreatif, terbuka
+                    terhadap ide baru, dan terus mencari solusi yang lebih baik dalam menghadapi perubahan bisnis dan
+                    teknologi.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Creativity</span>
+                    <span class="ph-chip">Continuous Improvement</span>
+                    <span class="ph-chip">Problem Solving</span>
+                    <span class="ph-chip">Agility</span>
+                </div>
+            </div>
+
+            <!-- 9. Learning & Development -->
+            <div class="program-hub-card">
+                <div class="ph-title">9. Learning & Development</div>
+                <p class="ph-desc">Program Learning & Development berfokus pada peningkatan kompetensi pegawai melalui
+                    pembelajaran berkelanjutan, pelatihan, dan pengembangan skill agar siap menghadapi tantangan masa
+                    depan.</p>
+                <div class="ph-attributes">
+                    <span class="ph-chip">Growth Mindset</span>
+                    <span class="ph-chip">Knowledge Sharing</span>
+                    <span class="ph-chip">Skill Development</span>
+                    <span class="ph-chip">Adaptability</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 10. Culture Performance Dashboard -->
+        <div class="section-heading reveal" id="dashboard-section"
+            style="margin-top: 50px; flex-direction: column; align-items: flex-start; text-align: left;">
+            <h5 style="font-size: 1.5rem; font-weight: 800; color: var(--ink); margin-bottom: 12px;">10. Culture
+                Performance Dashboard</h5>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">Dashboard
+                ini berfungsi sebagai alat monitoring untuk melihat perkembangan implementasi budaya perusahaan, tingkat
+                partisipasi, engagement pegawai, serta efektivitas program budaya yang berjalan.</p>
+            <div class="ph-attributes" style="border-top: none; padding-top: 0;">
+                <span class="ph-chip">Performance Tracking</span>
+                <span class="ph-chip">Evaluation</span>
+                <span class="ph-chip">Transparency</span>
+                <span class="ph-chip">Continuous Improvement</span>
+            </div>
+            <div class="section-line" style="margin-top: 24px; margin-left: 0;"></div>
         </div>
 
         <div class="dashboard-grid">
@@ -922,23 +1410,40 @@
                 </div>
                 <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
             </div>
-
         </div>
 
-        <!-- INITIATIVES -->
-        <div class="section-heading reveal" style="margin-top:50px;">
-            <h5>Ongoing Initiatives</h5>
+        <!-- TIMELINE -->
+        <div class="section-heading reveal" style="margin-top: 50px;">
+            <h5>Culture Activities Timeline</h5>
             <div class="section-line"></div>
         </div>
-
-        <div class="initiative-grid reveal" style="margin-bottom: 60px;">
-            <div class="initiative-card">
-                <div class="initiative-title">Cross-Functional Assignment</div>
-                <p class="initiative-desc">Cross-team collaboration initiative to strengthen inter-departmental digital
-                    culture adoption.</p>
-                <span class="status-badge progress"><span class="status-dot"></span> On Progress</span>
+        <div class="timeline-container reveal">
+            <div class="timeline-item">
+                <span class="timeline-date">Juni 2026</span>
+                <div class="timeline-content">
+                    <h6>Implementasi 5R Skala Nasional</h6>
+                    <p>Penerapan program budaya kerja 5R (Ringkas, Rapi, Resik, Rawat, Rajin) ke seluruh Kantor Cabang
+                        dan Unit Pelayanan secara bertahap.</p>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-date">Juli 2026</span>
+                <div class="timeline-content">
+                    <h6>Culture Challenge Q3 Kick-off</h6>
+                    <p>Kompetisi internal untuk menguji dan memperkuat internalisasi Core Values Brilian Way antar tim
+                        lintas divisi.</p>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-date">Agustus 2026</span>
+                <div class="timeline-content">
+                    <h6>Audit Standar Pelayanan 3S</h6>
+                    <p>Pelaksanaan audit komprehensif terkait Senyum, Salam, Sapa pada outlet-outlet untuk memastikan
+                        kualitas layanan terbaik.</p>
+                </div>
             </div>
         </div>
+
 
     </div>
 
@@ -986,14 +1491,7 @@
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="footer-custom text-center">
-        <div class="container">
-            <p class="fw-semibold mb-1">Gade Tower · Pegadaian Kantor Pusat</p>
-            <p>Email: <a href="mailto:budaya.kerja.pusat@pegadaian.co.id">budaya.kerja.pusat@pegadaian.co.id</a></p>
-            <small>© 2026 Pegadaian Digital Culture</small>
-        </div>
-    </footer>
+{% include 'cms/footer_contact.html' %}
 
 
     <!-- DYNAMIC EXPLANATION MODAL -->

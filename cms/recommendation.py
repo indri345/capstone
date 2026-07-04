@@ -85,6 +85,19 @@ def _build_visitor_features():
 # ML SCORING (Linear Regression Manual)
 # =====================================
 
+def _get_candidate_events(core_name=None):
+    qs = Event.objects.filter(
+        status__in=[
+            Event.STATUS_PUBLISHED,
+            Event.STATUS_ONGOING,
+            Event.STATUS_COMPLETED,
+        ]
+    )
+    if core_name:
+        qs = qs.filter(core_values__core_value_name__iexact=core_name)
+    return qs.distinct()
+
+
 def _train_weights(visitor_features: dict, events):
     """
     Hitung bobot dari data VisitorLog secara sederhana:
@@ -99,23 +112,24 @@ def _train_weights(visitor_features: dict, events):
         X, y = [], []
 
         for event in events:
+            if not event.event_date:
+                continue
+
             eid = event.event_id
             vf = visitor_features.get(eid, {})
 
             rating = float(getattr(event, 'rating', 0) or 0)
             days = (now().date() - event.event_date).days
-            recency = max(0, 1 - days / 365)   # 0-1, makin baru makin tinggi
+            recency = max(0, min(1, 1 - days / 365))
             visit_count = float(vf.get('visit_count', 0))
             avg_duration = float(vf.get('avg_duration', 0))
             avg_engagement = float(vf.get('avg_engagement', 0))
 
-            # Target: engagement score (yang ingin diprediksi)
             if avg_engagement > 0:
                 X.append([rating, recency, visit_count, avg_duration])
                 y.append(avg_engagement)
 
         if len(X) < 3:
-            # Data tidak cukup untuk training → pakai bobot default
             return None
 
         model = LinearRegression()
@@ -123,7 +137,6 @@ def _train_weights(visitor_features: dict, events):
         return model
 
     except ImportError:
-        # scikit-learn tidak terinstall
         return None
 
 
@@ -144,12 +157,14 @@ def calculate_event_score(event, visitor_features=None, ml_model=None):
     vf = visitor_features.get(eid, {})
 
     rating = float(getattr(event, 'rating', 0) or 0)
-    days = (now().date() - event.event_date).days
-    recency = max(0, 1 - days / 365)
+    if event.event_date:
+        days = (now().date() - event.event_date).days
+    else:
+        days = 365
+    recency = max(0, min(1, 1 - days / 365))
     visit_count = float(vf.get('visit_count', 0))
     avg_duration = float(vf.get('avg_duration', 0))
 
-    # ── ML PATH ──
     if ml_model is not None:
         try:
             import numpy as np
@@ -159,7 +174,6 @@ def calculate_event_score(event, visitor_features=None, ml_model=None):
         except Exception:
             pass
 
-    # ── RULE-BASED FALLBACK ──
     score = 0
     score += rating * 0.5
 
@@ -171,9 +185,8 @@ def calculate_event_score(event, visitor_features=None, ml_model=None):
         recency_score = 4
     score += recency_score * 0.3
 
-    # Bonus dari visitor data kalau ada
-    score += min(visit_count * 0.1, 2.0)        # max bonus 2 dari visits
-    score += min(avg_duration * 0.01, 1.0)      # max bonus 1 dari durasi
+    score += min(visit_count * 0.1, 2.0)
+    score += min(avg_duration * 0.01, 1.0)
 
     return score
 
@@ -182,21 +195,16 @@ def calculate_event_score(event, visitor_features=None, ml_model=None):
 # RECOMMENDED EVENTS
 # =====================================
 
-def get_recommended_events(limit=3):
-
-    events = Event.objects.all()
+def get_recommended_events(limit=3, core_name=None):
+    events = _get_candidate_events(core_name)
 
     if not events.exists():
         return []
 
-    # Ambil fitur dari VisitorLog
     visitor_features = _build_visitor_features()
-
-    # Coba training ML model
     ml_model = _train_weights(visitor_features, events)
 
     scored_events = []
-
     for event in events:
         try:
             score = calculate_event_score(event, visitor_features, ml_model)
@@ -208,7 +216,6 @@ def get_recommended_events(limit=3):
         return list(events.order_by("-event_date")[:limit])
 
     scored_events.sort(key=lambda x: x[0], reverse=True)
-
     return [event for _, event in scored_events[:limit]]
 
 

@@ -91,9 +91,13 @@ class Event(models.Model):
     @property
     def is_attendance_open(self):
         now = timezone.now()
-        if self.attendance_open_time and self.attendance_close_time:
-            return self.attendance_open_time <= now <= self.attendance_close_time
-        return False
+        if not self.attendance_open_time:
+            return False
+        if now < self.attendance_open_time:
+            return False
+        if self.attendance_close_time and now > self.attendance_close_time:
+            return False
+        return True
 
     @property
     def registered_count(self):
@@ -133,7 +137,13 @@ class EventRegistration(models.Model):
     """
     registration_id = models.AutoField(primary_key=True)
 
-    event_id   = models.IntegerField(null=True, blank=True, db_index=True)
+    event      = models.ForeignKey(
+        Event,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     event_name = models.CharField(max_length=255)
 
     full_name = models.CharField(max_length=255)
@@ -150,7 +160,7 @@ class EventRegistration(models.Model):
         ordering = ['-registered_at']
         constraints = [
             models.UniqueConstraint(
-                Lower('email'), 'event_id',
+                Lower('email'), 'event',
                 name='uniq_lower_email_per_event',
             ),
         ]
@@ -304,7 +314,7 @@ class Feedback(models.Model):
 
     event = models.ForeignKey(
         Event,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         db_column='event_id',
         null=True,
         blank=True
@@ -361,7 +371,7 @@ class VisitorLog(models.Model):
     page_visited     = models.CharField(max_length=255, null=True, blank=True)
     visit_duration   = models.IntegerField(null=True, blank=True, help_text="Duration in seconds")
     engagement_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    visitor_ip       = models.CharField(max_length=100, null=True, blank=True)
+    visitor_ip       = models.GenericIPAddressField(null=True, blank=True)
     visited_at       = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -427,3 +437,17 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.participant_email} — {self.event_registration.event_name} [{self.status}]"
+
+class ContactUs(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
+    message = models.TextField()
+    status = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    replied_at = models.DateTimeField(blank=True, null=True)
+    pic = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'contact_us'

@@ -23,6 +23,7 @@
         .nav-links { display: flex; align-items: center; }
         .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
         .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
+        .nav-links a.active { border-bottom: 2px solid white; padding-bottom: 4px; }
 
         .container { width: 90%; margin: 25px auto; padding-bottom: 40px; }
 
@@ -177,9 +178,10 @@
         <div class="nav-links">
             <a href="/admin-home/" class="{% if request.path == '/admin-home/' %}active{% endif %}">Control</a>
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
-            <a href="/admin-attendance/" class="active">Attendance</a>
+            <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
-            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;">Logout</a>
+            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
+            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;text-decoration:none;">Logout</a>
         </div>
     </div>
 
@@ -191,11 +193,12 @@
         </div>
 
         <!-- SUMMARY (terhubung dengan analytics — STEP 4 business rule) -->
-        <div class="summary-grid">
-            <div class="summary-card"><div class="num">{{ summary.total }}</div><div class="label">Total Attendance</div></div>
-            <div class="summary-card"><div class="num">{{ summary.pending }}</div><div class="label">Pending Verification</div></div>
-            <div class="summary-card"><div class="num">{{ summary.verified }}</div><div class="label">Verified</div></div>
-            <div class="summary-card"><div class="num">{{ summary.rejected }}</div><div class="label">Rejected</div></div>
+        <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="summary-card"><div class="num">{{ summary.total }}</div><div class="label">Total Terdaftar</div></div>
+            <div class="summary-card"><div class="num">{{ summary.not_attended }}</div><div class="label">Belum Absen</div></div>
+            <div class="summary-card accent-yellow"><div class="num">{{ summary.pending }}</div><div class="label">Pending</div></div>
+            <div class="summary-card accent-green"><div class="num">{{ summary.verified }}</div><div class="label">Verified</div></div>
+            <div class="summary-card accent-red"><div class="num">{{ summary.rejected }}</div><div class="label">Rejected</div></div>
         </div>
 
         <!-- ===================================================== -->
@@ -307,36 +310,48 @@
                 <div>Status / Aksi</div>
             </div>
 
-            {% for att in attendances %}
+            {% for item in attendances %}
             <div class="att-row">
-                <div class="att-email">{{ att.participant_email }}</div>
-                <div class="att-event">{{ att.event_registration.event_name }}</div>
-                <div>
-                    {% if att.photo_evidence %}
-                    <a href="{{ att.photo_evidence.url }}" target="_blank">
-                        <img src="{{ att.photo_evidence.url }}" class="att-photo">
-                    </a>
-                    {% else %}—{% endif %}
+                <div class="att-email">
+                    <strong style="display:block;margin-bottom:2px;">{{ item.reg.full_name }}</strong>
+                    <span class="text-muted" style="font-weight:normal;">{{ item.reg.email }}</span>
                 </div>
-                <div class="att-coords">
-                    📍 {{ att.latitude }}, {{ att.longitude }}<br>
-                    🕒 {{ att.attendance_timestamp|date:'d M Y H:i' }}
-                </div>
-                <div class="actions">
-                    <span class="badge {{ att.status }}">{{ att.get_status_display }}</span>
-                    {% if att.status == 'pending_verification' %}
-                    <div style="margin-top:8px;">
-                        <form method="post" action="{% url 'admin_verify_attendance' att.attendance_id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-verify">Verify</button>
-                        </form>
-                        <form method="post" action="{% url 'admin_reject_attendance' att.attendance_id %}" onsubmit="return confirm('Tolak attendance ini?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-reject">Reject</button>
-                        </form>
+                <div class="att-event">{{ item.reg.event_name }}</div>
+                
+                {% if item.att %}
+                    <div>
+                        {% if item.att.photo_evidence %}
+                        <a href="{{ item.att.photo_evidence.url }}" target="_blank">
+                            <img src="{{ item.att.photo_evidence.url }}" class="att-photo">
+                        </a>
+                        {% else %}—{% endif %}
                     </div>
-                    {% endif %}
-                </div>
+                    <div class="att-coords">
+                        {% if item.att.latitude %}📍 {{ item.att.latitude }}, {{ item.att.longitude }}<br>{% endif %}
+                        🕒 {{ item.att.attendance_timestamp|date:'d M Y H:i' }}
+                    </div>
+                    <div class="actions">
+                        <span class="badge {{ item.att.status }}">{{ item.att.get_status_display }}</span>
+                        {% if item.att.status == 'pending_verification' %}
+                        <div style="margin-top:8px;">
+                            <form method="post" action="{% url 'admin_verify_attendance' item.att.attendance_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-verify">Verify</button>
+                            </form>
+                            <form method="post" action="{% url 'admin_reject_attendance' item.att.attendance_id %}" onsubmit="return confirm('Tolak attendance ini?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-reject">Reject</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div>—</div>
+                    <div class="att-coords" style="color:#94a3b8;">—</div>
+                    <div class="actions">
+                        <span class="badge" style="background:#f1f5f9; color:#64748b; border: 1px solid #cbd5e1;">Belum Absen</span>
+                    </div>
+                {% endif %}
             </div>
             {% empty %}
             <div class="empty-state">Belum ada data attendance.</div>

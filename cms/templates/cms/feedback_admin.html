@@ -439,6 +439,7 @@
         .nav-links { display: flex; align-items: center; }
         .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
         .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
+        .nav-links a.active { border-bottom: 2px solid white; padding-bottom: 4px; }
         @media (max-width: 600px) {
             .navbar {
                 flex-direction: column;
@@ -472,7 +473,8 @@
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
             <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
-            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;">Logout</a>
+            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
+            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;text-decoration:none;">Logout</a>
         </div>
     </div>
 
@@ -486,15 +488,257 @@
         </div>
 
         <!-- FILTERS -->
-        <form class="filters" method="get" id="feedbackFilterForm">
-            <select name="event" class="filter-select"
-                onchange="document.getElementById('feedbackFilterForm').submit();">
-                <option value="all" {% if selected_event == 'all' %}selected{% endif %}>All Events</option>
-                {% for event_name in event_options %}
-                <option value="{{ event_name }}" {% if selected_event == event_name %}selected{% endif %}>{{ event_name }}
-                </option>
-                {% endfor %}
-            </select>
+        <!-- FILTERS -->
+        <form class="filters" method="get" id="feedbackFilterForm" style="display: flex; gap: 15px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; align-items: flex-start; flex-wrap: wrap;">
+            
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; width: 100%; justify-content: space-between;">
+                
+                <!-- Left side: Dropdown + Apply Button -->
+                <div style="display: flex; gap: 10px; align-items: flex-end; flex: 1; min-width: 300px; flex-wrap: wrap;">
+                    
+                    <!-- Custom Multi-Select Dropdown -->
+                    <div style="flex: 1; min-width: 250px; position: relative;" id="customMultiSelectContainer">
+                        <strong style="font-size: 14px; color: #1e293b; display: block; margin-bottom: 5px;">Events:</strong>
+                        
+                        <!-- Hidden real select (values are event IDs) -->
+                        <select name="event" multiple id="realEventSelect" style="display: none;">
+                            <option value="General" {% if 'General' in selected_events %}selected{% endif %}>General</option>
+                            {% for e in event_options %}
+                            <option value="{{ e.event_id }}" {% if e.event_id|stringformat:"s" in selected_events %}selected{% endif %}>{{ e.event_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- The UI Field (Chips) -->
+                        <div id="msUiField" style="min-height: 38px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: #fff;">
+                            <span style="color: #94a3b8; font-size: 13px; padding-left: 5px;" id="msPlaceholder">Select events...</span>
+                        </div>
+
+                        <!-- The Dropdown Menu -->
+                        <div id="msDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50; max-height: 300px; flex-direction: column;">
+                            <div style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+                                <input type="text" id="msSearch" placeholder="Search events in list..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box;">
+                            </div>
+                            <div style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0; color: #334155;">
+                                    <input type="checkbox" id="msSelectAll">
+                                    Select All
+                                </label>
+                            </div>
+                            <div id="msOptionsList" style="overflow-y: auto; padding: 5px 0;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Apply Filter Button -->
+                    <button type="submit" style="padding: 0 16px; height: 40px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Apply Filters</button>
+                </div>
+
+                <!-- Right side: Event Name Search with Autocomplete -->
+                <div style="position: relative; min-width: 250px;">
+                    <strong style="font-size: 14px; color: #1e293b; display: block; margin-bottom: 5px;">Search Name:</strong>
+                    <input type="text" name="search" id="eventSearchInput" class="filter-select" placeholder="Search event..." value="{{ search_query }}" style="width: 100%; height: 40px; padding: 8px; border-radius: 6px; box-sizing: border-box;" autocomplete="off">
+                    
+                    <!-- Autocomplete dropdown -->
+                    <div id="autocompleteDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50; max-height: 250px; overflow-y: auto;">
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const realSelect = document.getElementById('realEventSelect');
+                    const uiField = document.getElementById('msUiField');
+                    const placeholder = document.getElementById('msPlaceholder');
+                    const dropdown = document.getElementById('msDropdown');
+                    const searchInput = document.getElementById('msSearch');
+                    const selectAllCheckbox = document.getElementById('msSelectAll');
+                    const optionsList = document.getElementById('msOptionsList');
+
+                    let optionsData = [];
+                    for(let i=0; i<realSelect.options.length; i++) {
+                        optionsData.push({
+                            index: i,
+                            value: realSelect.options[i].value,
+                            text: realSelect.options[i].text,
+                            selected: realSelect.options[i].selected
+                        });
+                    }
+
+                    function renderDropdown() {
+                        const filterText = searchInput.value.toLowerCase();
+                        optionsList.innerHTML = '';
+                        let visibleCount = 0;
+                        let selectedVisibleCount = 0;
+
+                        optionsData.forEach(opt => {
+                            if(opt.text.toLowerCase().includes(filterText)) {
+                                visibleCount++;
+                                if(opt.selected) selectedVisibleCount++;
+
+                                const lbl = document.createElement('label');
+                                lbl.style.display = 'flex';
+                                lbl.style.alignItems = 'center';
+                                lbl.style.gap = '8px';
+                                lbl.style.padding = '8px 12px';
+                                lbl.style.fontSize = '13px';
+                                lbl.style.cursor = 'pointer';
+                                lbl.style.margin = '0';
+                                lbl.style.color = '#475569';
+                                
+                                lbl.onmouseenter = () => lbl.style.background = '#f1f5f9';
+                                lbl.onmouseleave = () => lbl.style.background = 'transparent';
+
+                                const cb = document.createElement('input');
+                                cb.type = 'checkbox';
+                                cb.checked = opt.selected;
+                                cb.onchange = (e) => {
+                                    opt.selected = e.target.checked;
+                                    syncToRealSelect();
+                                    renderChips();
+                                    renderDropdown();
+                                };
+
+                                lbl.appendChild(cb);
+                                lbl.appendChild(document.createTextNode(opt.text));
+                                optionsList.appendChild(lbl);
+                            }
+                        });
+                        
+                        selectAllCheckbox.checked = (visibleCount > 0 && selectedVisibleCount === visibleCount);
+                    }
+
+                    function renderChips() {
+                        const selected = optionsData.filter(o => o.selected);
+                        if(selected.length === 0) {
+                            uiField.innerHTML = '';
+                            uiField.appendChild(placeholder);
+                            return;
+                        }
+                        
+                        uiField.innerHTML = '';
+                        selected.forEach(opt => {
+                            const chip = document.createElement('div');
+                            chip.style.background = '#e0f2fe';
+                            chip.style.color = '#0369a1';
+                            chip.style.padding = '2px 8px';
+                            chip.style.borderRadius = '16px';
+                            chip.style.fontSize = '12px';
+                            chip.style.display = 'flex';
+                            chip.style.alignItems = 'center';
+                            chip.style.gap = '4px';
+                            chip.style.whiteSpace = 'nowrap';
+
+                            const textNode = document.createElement('span');
+                            textNode.innerText = opt.text;
+                            
+                            const closeBtn = document.createElement('span');
+                            closeBtn.innerHTML = '&times;';
+                            closeBtn.style.cursor = 'pointer';
+                            closeBtn.style.fontWeight = 'bold';
+                            closeBtn.style.fontSize = '14px';
+                            closeBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                opt.selected = false;
+                                syncToRealSelect();
+                                renderChips();
+                                if(dropdown.style.display === 'flex') renderDropdown();
+                            };
+
+                            chip.appendChild(textNode);
+                            chip.appendChild(closeBtn);
+                            uiField.appendChild(chip);
+                        });
+                    }
+
+                    function syncToRealSelect() {
+                        optionsData.forEach(opt => {
+                            realSelect.options[opt.index].selected = opt.selected;
+                        });
+                    }
+
+                    uiField.onclick = () => {
+                        dropdown.style.display = dropdown.style.display === 'none' ? 'flex' : 'none';
+                        if(dropdown.style.display === 'flex') {
+                            searchInput.focus();
+                            renderDropdown();
+                        }
+                    };
+
+                    searchInput.oninput = renderDropdown;
+
+                    selectAllCheckbox.onchange = (e) => {
+                        const filterText = searchInput.value.toLowerCase();
+                        optionsData.forEach(opt => {
+                            if(opt.text.toLowerCase().includes(filterText)) {
+                                opt.selected = e.target.checked;
+                            }
+                        });
+                        syncToRealSelect();
+                        renderChips();
+                        renderDropdown();
+                    };
+
+                    document.addEventListener('click', (e) => {
+                        if(!document.getElementById('customMultiSelectContainer').contains(e.target)) {
+                            dropdown.style.display = 'none';
+                        }
+                    });
+
+                    renderChips();
+
+                    // --- Autocomplete Logic ---
+                    const allEventNames = [
+                        {% for evt in event_options %}
+                        "{{ evt|escapejs }}",
+                        {% endfor %}
+                    ];
+
+                    const eventSearchInput = document.getElementById('eventSearchInput');
+                    const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+
+                    eventSearchInput.addEventListener('input', function() {
+                        const query = this.value.toLowerCase().trim();
+                        autocompleteDropdown.innerHTML = '';
+                        if (!query) {
+                            autocompleteDropdown.style.display = 'none';
+                            return;
+                        }
+
+                        const matches = allEventNames.filter(name => name.toLowerCase().includes(query));
+                        if (matches.length === 0) {
+                            autocompleteDropdown.style.display = 'none';
+                            return;
+                        }
+
+                        matches.forEach(match => {
+                            const item = document.createElement('div');
+                            item.textContent = match;
+                            item.style.padding = '8px 12px';
+                            item.style.cursor = 'pointer';
+                            item.style.fontSize = '13px';
+                            item.style.color = '#334155';
+                            item.style.borderBottom = '1px solid #f1f5f9';
+                            
+                            item.onmouseenter = () => item.style.background = '#f8fafc';
+                            item.onmouseleave = () => item.style.background = 'transparent';
+                            
+                            item.onclick = () => {
+                                eventSearchInput.value = match;
+                                autocompleteDropdown.style.display = 'none';
+                                document.getElementById('feedbackFilterForm').submit();
+                            };
+                            autocompleteDropdown.appendChild(item);
+                        });
+                        
+                        autocompleteDropdown.style.display = 'block';
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        if(!document.getElementById('eventSearchInput').contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                            autocompleteDropdown.style.display = 'none';
+                        }
+                    });
+                });
+            </script>
         </form>
 
         <div class="sentiment">
@@ -560,6 +804,7 @@
 
                         <div class="feedback-details hidden">
                             <p><strong>📌 Event:</strong> {{ fb.event }}</p>
+                            <p><strong>⭐ Rating:</strong> {{ fb.rating }}{% if fb.rating != 'N/A' %} Stars{% endif %}</p>
                         </div>
                     </div>
                     {% empty %}

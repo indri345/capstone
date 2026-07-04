@@ -4,407 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Admin</title>
+    <title>Explore Admin · Digital Culture</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+        :root {
+            --ink: #0B1F17;
+            --forest: #0F3D2E;
+            --forest-2: #14543D;
+            --lime: #B6F500;
+            --lime-soft: #E9FFB0;
+            --bg: #F6F8F6;
+            --card: #FFFFFF;
+            --text-muted: #6B7A73;
+            --border: rgba(15,61,46,0.08);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --shadow-soft: 0 8px 24px rgba(15,61,46,0.06);
+            --shadow-card: 0 14px 40px rgba(15,61,46,0.10);
+
+            /* status semantics — distinct from brand accent so states stay legible */
+            --status-draft-bg: #E7ECE9; --status-draft-fg: #4B5A54;
+            --status-published-bg: var(--lime-soft); --status-published-fg: var(--forest);
+            --status-ongoing-bg: #E1F0F8; --status-ongoing-fg: #1D6FA5;
+            --status-completed-bg: #FCEFD1; --status-completed-fg: #9A6300;
+            --status-archived-bg: #FBE3E0; --status-archived-fg: #B33F31;
         }
 
-        body {
-            background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%);
-            color: #1e293b;
-            min-height: 100vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--ink); min-height: 100vh; }
+        h1, h2, .logo, .item-title, .hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* ============ NAVBAR (shared with admin.html) ============ */
+        .navbar { background: var(--forest); display: flex; justify-content: space-between; align-items: center; padding: 14px 40px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 24px rgba(11,31,23,0.18); }
+        .logo { color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); font-size: 13px; font-weight: 800; }
+        .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
+        .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--ink); background: var(--lime); }
+        .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
+        .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
+        @media (max-width: 900px) {
+            .navbar { flex-direction: column; gap: 12px; padding: 16px 20px; align-items: stretch; }
+            .logo { justify-content: center; }
+            .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .nav-links a { font-size: 12.5px; padding: 7px 12px; }
         }
 
-        
-        
-
-        
-
-        
-
-        .nav-links a.active {
-            border-bottom: 2px solid white;
-        }
-
-        /* CONTAINER */
-        .container {
-            width: 90%;
-            margin: 25px auto;
-        }
-
-        /* HERO */
+        /* ============ CONTAINER / HERO ============ */
+        .container { width: min(1320px, 92%); margin: 32px auto; padding-bottom: 40px; }
         .hero {
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
-            padding: 30px;
-            border-radius: 18px;
-            margin-bottom: 20px;
+            background: radial-gradient(120% 160% at 100% 0%, #1B5C42 0%, var(--forest) 45%, var(--ink) 100%);
+            padding: 30px 34px; border-radius: var(--radius-lg); margin-bottom: 24px;
+            box-shadow: var(--shadow-card); position: relative; overflow: hidden;
         }
+        .hero::after { content: ''; position: absolute; top: -70px; right: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(182,245,0,0.08); }
+        .hero h1 { font-size: 23px; color: #fff; font-weight: 800; letter-spacing: -0.4px; position: relative; z-index: 1; }
+        .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255,255,255,0.72); max-width: 560px; position: relative; z-index: 1; }
 
-        .hero h1 {
-            font-size: 24px;
-            color: white;
-        }
+        /* ============ HEADER ACTION BAR ============ */
+        .add-wrapper { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .tabs { display: flex; gap: 6px; background: var(--card); padding: 5px; border-radius: 999px; border: 1px solid var(--border); box-shadow: var(--shadow-soft); }
+        .tab-btn { padding: 9px 20px; border: none; background: transparent; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--text-muted); transition: all 0.2s ease; font-family: 'Inter', sans-serif; }
+        .tab-btn:hover { color: var(--ink); }
+        .tab-btn.active { background: var(--lime); color: var(--ink); }
 
-        .hero p {
-            font-size: 13px;
-            margin-top: 5px;
-            opacity: 0.9;
-            color: white;
-        }
+        .search-input { padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); width: 300px; outline: none; font-size: 13.5px; color: var(--ink); transition: border-color 0.2s ease; }
+        .search-input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(182,245,0,0.18); }
 
-        /* HEADER ACTION BAR */
-        .add-wrapper {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* ============ LIST CONTAINER ============ */
+        .content-list { background: var(--card); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-soft); }
 
-        .tabs {
-            display: flex;
-            gap: 15px;
-        }
+        .list-item { display: flex; align-items: flex-start; gap: 22px; padding: 18px 20px; border-bottom: 1px solid var(--border); transition: background 0.2s ease; }
+        .list-item:hover { background: var(--bg); }
+        .list-item:last-child { border-bottom: none; }
 
-        .tab-btn {
-            padding: 10px 20px;
-            border: none;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #1e293b;
-            transition: background 0.2s;
-        }
+        .item-left { display: flex; gap: 16px; width: 340px; flex-shrink: 0; }
+        .item-thumb { width: 90px; height: 64px; object-fit: cover; border-radius: 10px; background: var(--bg); flex-shrink: 0; }
+        .item-info { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+        .item-title { font-weight: 700; font-size: 14.5px; color: var(--ink); line-height: 1.35; }
 
-        .tab-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
+        .item-middle { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 2px; }
+        .meta-text { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+        .meta-text svg { flex-shrink: 0; }
 
-        /* SEARCH */
-        .search-input {
-            padding: 10px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.85);
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(10px);
-            width: 300px;
-            outline: none;
-        }
+        /* ============ ACTIONS ============ */
+        .actions { display: flex; gap: 8px; flex-shrink: 0; flex-direction: column; width: 140px; }
+        .actions a, .actions button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: 9px; font-weight: 700; font-size: 12.5px; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease; width: 100%; font-family: 'Inter', sans-serif; }
+        .actions form { width: 100%; }
 
-        /* LIST CONTAINER (Replacing Table) */
-        .content-list {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.85);
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08);
-        }
+        .actions-grid-2x2 { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; width: 220px !important; align-items: start; }
+        .actions-grid-2x2 form { width: 100%; margin: 0; }
 
-        /* LIST ITEM */
-        .list-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            transition: background 0.2s ease;
-        }
+        .btn-edit { background: var(--card); color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-edit:hover { background: var(--bg); color: var(--ink); }
 
-        .list-item:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
+        .btn-preview { background: var(--forest); color: #fff; }
+        .btn-preview:hover { background: var(--ink); }
 
-        .list-item:last-child {
-            border-bottom: none;
-        }
+        .btn-complete-yellow { background: var(--status-completed-bg); color: var(--status-completed-fg); border: 1px solid rgba(154,99,0,0.18); }
+        .btn-complete-yellow:hover { background: #F8E2AA; }
 
-        .item-thumb {
-            width: 90px;
-            height: 64px;
-            object-fit: cover;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.05);
-            flex-shrink: 0;
-        }
+        .btn-publish { background: var(--lime-soft); color: var(--forest); border: 1px solid rgba(15,61,46,0.12); }
+        .btn-publish:hover { background: var(--lime); }
 
-        .item-content {
-            flex-grow: 1;
-        }
+        .btn-delete { background: #FBE3E0; color: #B33F31; }
+        .btn-delete:hover { background: #F6CFC9; }
 
-        .item-title {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 4px;
-            color: #1e293b;
-        }
+        .btn-archive { background: #FBE3E0; color: #B33F31; }
+        .btn-archive:hover { background: #F6CFC9; }
 
-        .item-meta {
-            display: flex;
-            gap: 20px;
-            font-size: 12px;
-            color: #64748b;
-            align-items: center;
-        }
+        /* ============ ADD BUTTON ============ */
+        .btn-add { background: var(--lime); color: var(--ink); padding: 10px 18px; border-radius: 12px; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; transition: background 0.2s ease; }
+        .btn-add:hover { background: #C8FF33; }
 
-        .item-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        /* ACTION BUTTONS */
-        .actions {
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
+        .empty-state { padding: 34px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
 
-        .actions a,
-        .actions button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 13px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
+        /* ============ SECTION HEADINGS ============ */
+        .section-heading { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 12px; padding-left: 12px; border-left: 4px solid var(--forest); display: flex; align-items: center; }
+        .section-heading svg { margin-right: 6px; vertical-align: middle; }
+        .section-heading .heading-note { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 8px; }
 
-        .btn-edit {
-            background: rgba(255, 255, 255, 0.9);
-            color: #475569;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
+        .inactive-item { opacity: 0.75; background: rgba(246,248,246,0.5); }
+        .inactive-item:hover { opacity: 1; background: var(--bg); }
 
-        .btn-edit:hover {
-            background: #f8fafc;
-        }
+        /* ============ STATUS BADGES ============ */
+        .status-badge { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+        .status-badge.status-draft { background: var(--status-draft-bg); color: var(--status-draft-fg); }
+        .status-badge.status-published { background: var(--status-published-bg); color: var(--status-published-fg); }
+        .status-badge.status-ongoing { background: var(--status-ongoing-bg); color: var(--status-ongoing-fg); }
+        .status-badge.status-completed { background: var(--status-completed-bg); color: var(--status-completed-fg); }
+        .status-badge.status-archived { background: var(--status-archived-bg); color: var(--status-archived-fg); }
 
-        .btn-preview {
-            background: #3b82f6;
-            color: white;
-        }
+        .section-heading.status-draft { border-left-color: #94a0a3; }
+        .section-heading.status-published { border-left-color: var(--forest); }
+        .section-heading.status-ongoing { border-left-color: #1D6FA5; }
+        .section-heading.status-completed { border-left-color: #9A6300; }
+        .section-heading.status-archived { border-left-color: #B33F31; margin-top: 34px; }
 
-        .btn-preview:hover {
-            background: #2563eb;
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 900px) {
+            .list-item { flex-direction: column; align-items: stretch; gap: 16px; }
+            .item-left { width: 100%; }
+            .actions { width: 100%; flex-direction: row; flex-wrap: wrap; }
+            .actions a, .actions button, .actions form { flex: 1; }
+            .actions.actions-grid-2x2 { display: grid !important; grid-template-columns: 1fr; width: 100% !important; }
         }
-
-        .btn-delete {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-delete:hover {
-            background: #dc2626;
-        }
-
-        /* ADD BUTTON */
-        .btn-add {
-            background: #3b82f6;
-            color: white;
-            padding: 10px 18px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .btn-add:hover {
-            background: #2563eb;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .empty-state {
-            padding: 30px;
-            text-align: center;
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .section-heading {
-            font-size: 16px; 
-            font-weight: 600; 
-            color: #1e293b; 
-            margin-bottom: 12px;
-            padding-left: 10px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .section-heading.inactive {
-            border-left-color: #94a3b8;
-            margin-top: 35px;
-        }
-
-        .inactive-item {
-            opacity: 0.7;
-            background: rgba(241, 245, 249, 0.4);
-        }
-        
-        .inactive-item:hover {
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .inactive-badge {
-            background: #cbd5e1 !important;
-            color: #475569 !important;
-        }
-
-        /* STEP 2: lifecycle status badges */
-        .status-badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .status-badge.status-draft     { background:#e2e8f0; color:#475569; }
-        .status-badge.status-published { background:#dcfce7; color:#15803d; }
-        .status-badge.status-ongoing   { background:#dbeafe; color:#1d4ed8; }
-        .status-badge.status-completed { background:#ede9fe; color:#6d28d9; }
-        .status-badge.status-archived  { background:#fee2e2; color:#b91c1c; }
-
-        .section-heading.status-draft     { border-left-color:#94a3b8; }
-        .section-heading.status-published { border-left-color:#22c55e; }
-        .section-heading.status-ongoing   { border-left-color:#3b82f6; }
-        .section-heading.status-completed { border-left-color:#8b5cf6; }
-        .section-heading.status-archived  { border-left-color:#ef4444; margin-top:35px; }
-    
-        /* NAVBAR ADMIN CSS */
-        .navbar { background: linear-gradient(to right, #3b82f6, #60a5fa); display: flex; justify-content: space-between; padding: 15px 40px; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { color: white; font-weight: 600; text-decoration: none; font-size: 18px; }
-        .nav-links { display: flex; align-items: center; }
-        .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
-        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
-        @media (max-width: 600px) {
-            .navbar {
-                flex-direction: column;
-                gap: 12px;
-                padding: 15px 20px;
-                align-items: center;
-            }
-            .nav-links {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            .nav-links a {
-                margin-left: 0;
-                font-size: 13px;
-                padding: 4px 8px;
-            }
-        }
-
         @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                margin: 16px auto 24px;
-            }
-
-            .hero {
-                padding: 22px 18px;
-            }
-
-            .hero h1 {
-                font-size: 20px;
-            }
-
-            .add-wrapper {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-            }
-
-            .tabs {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .tab-btn {
-                padding: 8px 14px;
-                font-size: 13px;
-            }
-
-            .search-input {
-                width: 100%;
-            }
-
-            .list-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 16px;
-            }
-
-            .item-thumb {
-                width: 100%;
-                height: 140px;
-            }
-
-            .item-meta {
-                flex-wrap: wrap;
-                gap: 8px 12px;
-            }
-
-            .actions {
-                width: 100%;
-                flex-wrap: wrap;
-                justify-content: flex-start;
-            }
-
-            .actions a,
-            .actions button {
-                width: auto;
-                padding: 7px 12px;
-            }
+            .container { width: 95%; margin: 16px auto 24px; }
+            .hero { padding: 22px 18px; }
+            .hero h1 { font-size: 20px; }
+            .add-wrapper { flex-direction: column; align-items: stretch; gap: 12px; }
+            .tabs { flex-wrap: wrap; gap: 6px; }
+            .tab-btn { padding: 8px 14px; font-size: 13px; }
+            .search-input { width: 100%; }
+            .list-item { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+            .item-thumb { width: 100%; height: 140px; }
+            .actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+            .actions a, .actions button { width: auto; padding: 7px 12px; }
         }
-
     </style>
 </head>
 
 <body>
 
     <!-- NAVBAR -->
-            <div class="navbar">
-        <a href="{% url 'home' %}" class="logo">Digital Culture</a>
+    <div class="navbar">
+        <a href="{% url 'home' %}" class="logo"><span class="logo-mark">DC</span>Digital Culture</a>
         <div class="nav-links">
             <a href="/admin-home/" class="{% if request.path == '/admin-home/' %}active{% endif %}">Control</a>
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
             <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
-            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;">Logout</a>
+            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
+            <a href="{% url 'admin_logout' %}" class="nav-logout">Logout</a>
         </div>
     </div>
-
 
     <div class="container">
 
@@ -435,40 +217,38 @@
             <div class="empty-state">Tidak ada event untuk ditampilkan.</div>
             {% endif %}
 
-            <!-- STEP 2: Event Lifecycle Management — events dikelompokkan
-                 berdasarkan status sungguhan (Draft/Published/Ongoing/
-                 Completed/Archived), bukan lagi dihitung dari tanggal. -->
-
-            <!-- ═══════════════════════════════════════════════════════ -->
-            <!-- Reusable macro-style: each status section uses the      -->
-            <!-- same item pattern with lifecycle meta (PIC, capacity,   -->
-            <!-- registration deadline, attendance window).              -->
-            <!-- ═══════════════════════════════════════════════════════ -->
-
             <!-- PUBLISHED EVENTS -->
-            <div class="section-heading status-published">✅ Published Events</div>
+            <div class="section-heading status-published"><svg width="18" height="18" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>Published Events</div>
             <div class="content-list" id="list-published-events" style="margin-bottom: 30px;">
                 {% for event in events %}{% if event.status == 'published' %}
                 <div class="list-item" data-search="{{ event.event_name|lower }}">
-                    <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
-                        class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
-                    <div class="item-content">
-                        <div class="item-title">{{ event.event_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ event.event_date|date:'j M Y' }}</span>
-                            <span class="status-badge status-published">✅ Published</span>
-                            <span>👥 {{ event.registrant_count|default:'0' }}{% if event.capacity %} / {{ event.capacity }}{% endif %} peserta</span>
-                            {% if event.person_in_charge %}<span>👤 {{ event.person_in_charge }}</span>{% endif %}
-                            {% if event.registration_deadline %}<span>📋 Deadline {{ event.registration_deadline|date:'j M H:i' }}</span>{% endif %}
-                            {% if event.is_attendance_open %}<span style="color:#15803d;font-weight:700;">✅ Absensi Terbuka</span>{% endif %}
-                            <span>{{ event.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ event.event_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ event.event_date|date:'j M Y' }}</span>
+                            <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {{ event.registrant_count|default:'0' }}{% if event.capacity %} / {{ event.capacity }}{% endif %} peserta</span>
                         </div>
                     </div>
-                    <div class="actions">
+                    <div class="item-middle">
+                        <span class="status-badge status-published">Published</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ event.views|default:'0' }} views</span>
+                        {% if event.registration_deadline %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> Deadline {{ event.registration_deadline|date:'j M H:i' }}</span>{% endif %}
+                        {% if event.person_in_charge %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {{ event.person_in_charge }}</span>{% endif %}
+                        {% if event.is_attendance_open %}<span class="meta-text" style="color:var(--forest);font-weight:700;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Absensi Terbuka</span>{% endif %}
+                    </div>
+                    <div class="actions actions-grid-2x2">
                         <a href="{% url 'admin_edit_event' event.event_id %}" class="btn-edit">Edit</a>
+                        <form method="post" action="{% url 'admin_change_event_status' event.event_id %}">
+                            {% csrf_token %}<input type="hidden" name="status" value="completed">
+                            <button type="submit" class="btn-complete-yellow" onclick="return confirm('Tandai event ini selesai (Completed)?')">Complete</button>
+                        </form>
                         <a href="{% url 'admin_event_preview' event.event_id %}" class="btn-preview">Preview</a>
-                        <form method="post" action="{% url 'admin_delete_event' event.event_id %}" style="display:inline">
+                        <form method="post" action="{% url 'admin_delete_event' event.event_id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn-delete" onclick="return confirm('Hapus event ini?')">Delete</button>
                         </form>
@@ -478,28 +258,38 @@
             </div>
 
             <!-- ONGOING EVENTS -->
-            <div class="section-heading status-ongoing">🔵 Ongoing Events</div>
+            <div class="section-heading status-ongoing"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 16 16 12 12 8"></polyline>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>Ongoing Events</div>
             <div class="content-list" id="list-ongoing-events" style="margin-bottom: 30px;">
                 {% for event in events %}{% if event.status == 'ongoing' %}
                 <div class="list-item" data-search="{{ event.event_name|lower }}">
-                    <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
-                        class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
-                    <div class="item-content">
-                        <div class="item-title">{{ event.event_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ event.event_date|date:'j M Y' }}</span>
-                            <span class="status-badge status-ongoing">🔵 Ongoing</span>
-                            <span>👥 {{ event.registrant_count|default:'0' }}{% if event.capacity %} / {{ event.capacity }}{% endif %} peserta</span>
-                            {% if event.person_in_charge %}<span>👤 {{ event.person_in_charge }}</span>{% endif %}
-                            {% if event.is_attendance_open %}<span style="color:#15803d;font-weight:700;">✅ Absensi Terbuka</span>{% else %}{% if event.attendance_open_time %}<span style="color:#94a3b8;">🔒 Absensi Belum Buka</span>{% endif %}{% endif %}
-                            <span>{{ event.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ event.event_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ event.event_date|date:'j M Y' }}</span>
+                            <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {{ event.registrant_count|default:'0' }}{% if event.capacity %} / {{ event.capacity }}{% endif %} peserta</span>
                         </div>
                     </div>
-                    <div class="actions">
+                    <div class="item-middle">
+                        <span class="status-badge status-ongoing">Ongoing</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ event.views|default:'0' }} views</span>
+                        {% if event.registration_deadline %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> Deadline {{ event.registration_deadline|date:'j M H:i' }}</span>{% endif %}
+                        {% if event.person_in_charge %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {{ event.person_in_charge }}</span>{% endif %}
+                        {% if event.is_attendance_open %}<span class="meta-text" style="color:var(--forest);font-weight:700;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Absensi Terbuka</span>{% elif event.attendance_open_time %}<span class="meta-text" style="color:var(--text-muted);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Absensi Belum Buka</span>{% endif %}
+                    </div>
+                    <div class="actions actions-grid-2x2">
                         <a href="{% url 'admin_edit_event' event.event_id %}" class="btn-edit">Edit</a>
+                        <form method="post" action="{% url 'admin_change_event_status' event.event_id %}">
+                            {% csrf_token %}<input type="hidden" name="status" value="completed">
+                            <button type="submit" class="btn-complete-yellow" onclick="return confirm('Tandai event ini selesai (Completed)?')">Complete</button>
+                        </form>
                         <a href="{% url 'admin_event_preview' event.event_id %}" class="btn-preview">Preview</a>
-                        <form method="post" action="{% url 'admin_delete_event' event.event_id %}" style="display:inline">
+                        <form method="post" action="{% url 'admin_delete_event' event.event_id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn-delete" onclick="return confirm('Hapus event ini?')">Delete</button>
                         </form>
@@ -509,30 +299,38 @@
             </div>
 
             <!-- DRAFT EVENTS -->
-            <div class="section-heading status-draft">⬛ Draft Events</div>
+            <div class="section-heading status-draft"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>Draft Events</div>
             <div class="content-list" id="list-draft-events" style="margin-bottom: 30px;">
                 {% for event in events %}{% if event.status == 'draft' %}
                 <div class="list-item inactive-item" data-search="{{ event.event_name|lower }}">
-                    <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
-                        class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
-                    <div class="item-content">
-                        <div class="item-title">{{ event.event_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ event.event_date|date:'j M Y' }}</span>
-                            <span class="status-badge status-draft">⬛ Draft</span>
-                            {% if event.person_in_charge %}<span>👤 {{ event.person_in_charge }}</span>{% endif %}
-                            {% if event.capacity %}<span>👥 Kapasitas {{ event.capacity }}</span>{% endif %}
-                            <span style="color:#f59e0b;">⚠️ Tidak tampil di Explore</span>
-                            <span>{{ event.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ event.event_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ event.event_date|date:'j M Y' }}</span>
+                            <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {% if event.capacity %}Kapasitas {{ event.capacity }}{% else %}Kapasitas belum diatur{% endif %}</span>
                         </div>
+                    </div>
+                    <div class="item-middle">
+                        <span class="status-badge status-draft">Draft</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ event.views|default:'0' }} views</span>
+                        {% if event.registration_deadline %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> Deadline {{ event.registration_deadline|date:'j M H:i' }}</span>{% endif %}
+                        {% if event.person_in_charge %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {{ event.person_in_charge }}</span>{% endif %}
+                        <span class="meta-text" style="color:#9A6300;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Tidak tampil di Explore</span>
                     </div>
                     <div class="actions">
                         <a href="{% url 'admin_edit_event' event.event_id %}" class="btn-edit">Edit</a>
                         <a href="{% url 'admin_event_preview' event.event_id %}" class="btn-preview">Preview</a>
                         <form method="post" action="{% url 'admin_change_event_status' event.event_id %}" style="display:inline">
                             {% csrf_token %}<input type="hidden" name="status" value="published">
-                            <button type="submit" class="btn-edit" style="background:#dcfce7;color:#15803d;border-color:#86efac;" onclick="return confirm('Publish event ini?')">Publish</button>
+                            <button type="submit" class="btn-publish" onclick="return confirm('Publish event ini?')">Publish</button>
                         </form>
                         <form method="post" action="{% url 'admin_delete_event' event.event_id %}" style="display:inline">
                             {% csrf_token %}
@@ -544,53 +342,62 @@
             </div>
 
             <!-- COMPLETED EVENTS -->
-            <div class="section-heading status-completed">🟣 Completed Events</div>
+            <div class="section-heading status-completed"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>Completed Events</div>
             <div class="content-list" id="list-completed-events" style="margin-bottom: 30px;">
                 {% for event in events %}{% if event.status == 'completed' %}
                 <div class="list-item inactive-item" data-search="{{ event.event_name|lower }}">
-                    <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
-                        class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
-                    <div class="item-content">
-                        <div class="item-title">{{ event.event_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ event.event_date|date:'j M Y' }}</span>
-                            <span class="status-badge status-completed">🟣 Completed</span>
-                            <span>👥 {{ event.registrant_count|default:'0' }} peserta</span>
-                            {% if event.person_in_charge %}<span>👤 {{ event.person_in_charge }}</span>{% endif %}
-                            <span style="color:#6d28d9;">✓ Masih bisa dilihat peserta</span>
-                            <span>{{ event.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ event.event_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ event.event_date|date:'j M Y' }}</span>
+                            <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {{ event.registrant_count|default:'0' }} peserta</span>
                         </div>
+                    </div>
+                    <div class="item-middle">
+                        <span class="status-badge status-completed">Completed</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ event.views|default:'0' }} views</span>
+                        {% if event.person_in_charge %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {{ event.person_in_charge }}</span>{% endif %}
+                        <span class="meta-text" style="color:#9A6300;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Masih bisa dilihat peserta</span>
                     </div>
                     <div class="actions">
                         <a href="{% url 'admin_edit_event' event.event_id %}" class="btn-edit">Edit</a>
                         <a href="{% url 'admin_event_preview' event.event_id %}" class="btn-preview">Preview</a>
                         <form method="post" action="{% url 'admin_change_event_status' event.event_id %}" style="display:inline">
                             {% csrf_token %}<input type="hidden" name="status" value="archived">
-                            <button type="submit" class="btn-delete" style="background:#fee2e2;color:#b91c1c;" onclick="return confirm('Archive event ini?')">Archive</button>
+                            <button type="submit" class="btn-archive" onclick="return confirm('Archive event ini?')">Archive</button>
                         </form>
                     </div>
                 </div>
                 {% endif %}{% endfor %}
             </div>
 
-            <!-- ARCHIVED EVENTS — hanya dapat diakses admin (STEP 2 business rule) -->
-            <div class="section-heading status-archived">🔴 Archived Events <span style="font-size:12px; font-weight:400; color:#94a3b8;">(hanya terlihat oleh admin)</span></div>
+            <!-- ARCHIVED EVENTS -->
+            <div class="section-heading status-archived"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                    <rect x="1" y="3" width="22" height="5"></rect>
+                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>Archived Events <span class="heading-note">(hanya terlihat oleh admin)</span></div>
             <div class="content-list" id="list-archived-events">
                 {% for event in events %}{% if event.status == 'archived' %}
                 <div class="list-item inactive-item" data-search="{{ event.event_name|lower }}">
-                    <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}"
-                        class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
-                    <div class="item-content">
-                        <div class="item-title">{{ event.event_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ event.event_date|date:'j M Y' }}</span>
-                            <span class="status-badge status-archived">🔴 Archived</span>
-                            {% if event.person_in_charge %}<span>👤 {{ event.person_in_charge }}</span>{% endif %}
-                            <span style="color:#b91c1c;">🔒 Tersembunyi dari publik</span>
-                            <span>{{ event.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if event.image_url %}/media/{{ event.image_url }}{% else %}https://picsum.photos/400/300?random={{ event.event_id }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ event.event_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ event.event_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ event.event_date|date:'j M Y' }}</span>
                         </div>
+                    </div>
+                    <div class="item-middle">
+                        <span class="status-badge status-archived">Archived</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ event.views|default:'0' }} views</span>
+                        {% if event.person_in_charge %}<span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> {{ event.person_in_charge }}</span>{% endif %}
+                        <span class="meta-text" style="color:#B33F31;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Tersembunyi dari publik</span>
                     </div>
                     <div class="actions">
                         <a href="{% url 'admin_edit_event' event.event_id %}" class="btn-edit">Edit</a>
@@ -600,7 +407,7 @@
                         </form>
                         <form method="post" action="{% url 'admin_delete_event' event.event_id %}" style="display:inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn-delete" onclick="return confirm('Hapus event ini?')">Delete</button>
+                            <button type="submit" class="btn-delete" onclick="return confirm('Hapus event ini secara permanen?')">Delete</button>
                         </form>
                     </div>
                 </div>
@@ -616,26 +423,25 @@
             <div class="content-list" id="list-news">
                 {% for n in news_items %}
                 <div class="list-item" data-search="{{ n.title|lower }}">
-                    <img src="https://picsum.photos/400/300?random={{ n.news_id }}"
-                        data-gdrive="{% if n.image_url %}{{ n.image_url }}{% endif %}" class="item-thumb"
-                        onerror="this.src='https://picsum.photos/400/300?random={{ n.news_id }}'">
-
-                    <div class="item-content">
-                        <div class="item-title">{{ n.title }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ n.created_at|date:'j M Y' }}</span>
-                            <span>📌 {{ n.edition.edition_name|default:'No Edition' }}</span>
-                            <span>{{ n.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if n.image_file %}{{ n.image_file.url }}{% elif n.image_url %}{{ n.image_url }}{% else %}https://picsum.photos/400/300?random={{ n.news_id }}{% endif %}" data-gdrive="{% if n.image_url %}{{ n.image_url }}{% endif %}" class="item-thumb" onerror="this.src='https://picsum.photos/400/300?random={{ n.news_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ n.title }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ n.created_at|date:'j M Y' }}</span>
                         </div>
+                    </div>
+
+                    <div class="item-middle">
+                        <span class="meta-text" style="color: var(--text-muted); font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg> {{ n.edition.edition_name|default:'No Edition' }}</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ n.views|default:'0' }} views</span>
                     </div>
 
                     <div class="actions">
                         <a href="{% url 'admin_edit_news' n.news_id %}" class="btn-edit">Edit</a>
                         <a href="{% url 'redirect_news' n.news_id %}" target="_blank" class="btn-preview">Preview</a>
-                        <form method="post" action="{% url 'admin_delete_news' n.news_id %}" style="display:inline">
+                        <form method="post" action="{% url 'admin_delete_news' n.news_id %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn-delete"
-                                onclick="return confirm('Hapus news ini?')">Delete</button>
+                            <button type="submit" class="btn-delete" onclick="return confirm('Hapus news ini?')">Delete</button>
                         </form>
                     </div>
                 </div>
@@ -653,27 +459,38 @@
             <div class="content-list" id="list-attributes">
                 {% for attr in attributes %}
                 <div class="list-item" data-search="{{ attr.attribute_name|lower }}">
-                    <img src="https://picsum.photos/400/300?{{ attr.attribute_id }}" data-gdrive="{{ attr.file_url }}"
-                        class="item-thumb" onerror="this.src='https://picsum.photos/400/300?{{ attr.attribute_id }}'">
-
-                    <div class="item-content">
-                        <div class="item-title">{{ attr.attribute_name }}</div>
-                        <div class="item-meta">
-                            <span>📅 {{ attr.created_at|date:'j M Y' }}</span>
-                            <span style="text-transform: capitalize;">📌 {{ attr.attribute_type }}</span>
-                            <span>{{ attr.views|default:'0' }} views</span>
+                    <div class="item-left">
+                        <img src="{% if attr.file_url %}{{ attr.file_url }}{% else %}https://picsum.photos/400/300?random={{ attr.attribute_id }}{% endif %}"
+                             data-gdrive="{% if attr.file_url %}{{ attr.file_url }}{% endif %}"
+                             class="item-thumb"
+                             alt="{{ attr.attribute_name }}"
+                             loading="lazy"
+                             onerror="this.src='https://picsum.photos/400/300?random={{ attr.attribute_id }}'">
+                        <div class="item-info">
+                            <div class="item-title">{{ attr.attribute_name }}</div>
+                            <span class="meta-text"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> {{ attr.created_at|date:'j M Y' }}</span>
                         </div>
+                    </div>
+
+                    <div class="item-middle">
+                        <span class="meta-text" style="text-transform: capitalize;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg> {{ attr.attribute_type }}</span>
+                        <span class="meta-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> {{ attr.views|default:'0' }} views</span>
+                        {% if attr.file_url %}
+                        <span class="meta-text" style="color: var(--forest); font-weight: 600;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <a href="{{ attr.file_url }}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline; word-break: break-all;">{{ attr.file_url }}</a>
+                        </span>
+                        {% else %}
+                        <span class="meta-text" style="color: var(--text-muted);">Tidak ada file tersimpan</span>
+                        {% endif %}
                     </div>
 
                     <div class="actions">
                         <a href="{% url 'admin_edit_attribute' attr.attribute_id %}" class="btn-edit">Edit</a>
-                        <a href="{% url 'redirect_attribute' attr.attribute_id %}" target="_blank"
-                            class="btn-preview">Preview</a>
-                        <form method="post" action="{% url 'admin_delete_attribute' attr.attribute_id %}"
-                            style="display:inline">
+                        <a href="{% url 'redirect_attribute' attr.attribute_id %}" target="_blank" class="btn-preview">Preview</a>
+                        <form method="post" action="{% url 'admin_delete_attribute' attr.attribute_id %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn-delete"
-                                onclick="return confirm('Hapus attribute ini?')">Delete</button>
+                            <button type="submit" class="btn-delete" onclick="return confirm('Hapus attribute ini?')">Delete</button>
                         </form>
                     </div>
                 </div>
@@ -683,7 +500,6 @@
             </div>
         </div>
 
-    </div>
 
     <script>
         function showTab(tabId) {

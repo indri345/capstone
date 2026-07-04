@@ -1,0 +1,191 @@
+<!-- FOOTER WITH CONTACT US -->
+<style>
+    .footer-custom {
+        background: var(--ink);
+        color: rgba(255,255,255,0.65);
+        padding: 50px 0 34px;
+        margin-top: 90px;
+        font-size: 14px;
+        border-top: 1px solid rgba(182,245,0,0.1);
+    }
+    .footer-custom p.fw-semibold { color: white; }
+    .footer-custom a { color: var(--lime); text-decoration: none; font-weight: 600; }
+    .footer-custom small { color: rgba(255,255,255,0.4); }
+
+    .contact-form-container {
+        max-width: 600px;
+        margin: 0 auto 40px auto;
+        padding-bottom: 40px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        text-align: left;
+    }
+    .contact-form-title {
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: white;
+        font-size: 1.5rem;
+    }
+    .contact-form-desc {
+        opacity: 0.8;
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+    .contact-group {
+        margin-bottom: 16px;
+    }
+    .contact-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: rgba(255,255,255,0.9);
+    }
+    .contact-input {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.05);
+        color: white;
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, background 0.2s;
+    }
+    .contact-input:focus {
+        outline: none;
+        border-color: var(--lime);
+        background: rgba(255,255,255,0.1);
+    }
+    .contact-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        border-radius: 8px;
+        background: var(--lime);
+        color: var(--ink);
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+    }
+    .contact-btn:hover {
+        background: #C8FF33;
+        transform: translateY(-1px);
+    }
+    .contact-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    #contactFeedback {
+        display: none;
+        padding: 12px;
+        margin-bottom: 16px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        text-align: center;
+        font-weight: 600;
+    }
+</style>
+
+<footer class="footer-custom text-center">
+    <div class="container">
+        <!-- CONTACT US SECTION -->
+        <div class="contact-form-container">
+            <h4 class="contact-form-title">Contact Us</h4>
+            <p class="contact-form-desc">Punya pertanyaan atau masukan tentang budaya kerja perusahaan? Silakan tinggalkan pesan Anda di bawah ini.</p>
+            
+            <form id="contactUsForm">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token|default:'' }}">
+                <div class="contact-group">
+                    <label class="contact-label" for="contactName">Name</label>
+                    <input type="text" id="contactName" name="name" class="contact-input" required>
+                </div>
+                <div class="contact-group">
+                    <label class="contact-label" for="contactEmail">Email</label>
+                    <input type="email" id="contactEmail" name="email" class="contact-input" required>
+                </div>
+                <div class="contact-group" style="margin-bottom: 24px;">
+                    <label class="contact-label" for="contactMessage">Message</label>
+                    <textarea id="contactMessage" name="message" class="contact-input" rows="4" required placeholder="How can we help?" style="resize: vertical;"></textarea>
+                </div>
+                <div id="contactFeedback"></div>
+                <button type="submit" id="contactSubmitBtn" class="contact-btn">Send Message</button>
+            </form>
+        </div>
+
+        <!-- ORIGINAL FOOTER TEXT -->
+        <p class="fw-semibold mb-1">Gade Tower · Pegadaian Kantor Pusat</p>
+        <p>Email: <a href="mailto:budaya.kerja.pusat@pegadaian.co.id">budaya.kerja.pusat@pegadaian.co.id</a></p>
+        <small>© 2026 Pegadaian Digital Culture. All Rights Reserved.</small>
+    </div>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("contactUsForm");
+    if (form) {
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById("contactSubmitBtn");
+            const feedback = document.getElementById("contactFeedback");
+            const name = document.getElementById("contactName").value.trim();
+            const email = document.getElementById("contactEmail").value.trim();
+            const message = document.getElementById("contactMessage").value.trim();
+            
+            if (!name || !email || !message) {
+                feedback.style.display = "block";
+                feedback.style.background = "rgba(255, 60, 60, 0.1)";
+                feedback.style.color = "#ff8a8a";
+                feedback.style.border = "1px solid rgba(255, 60, 60, 0.3)";
+                feedback.textContent = "Mohon lengkapi semua bidang.";
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = "Mengirim pesan...";
+            feedback.style.display = "none";
+            
+            try {
+                const formData = new FormData(form);
+                const csrfInput = form.querySelector('[name=csrfmiddlewaretoken]');
+                if (!csrfInput || !csrfInput.value) {
+                    const metaCsrf = document.querySelector('meta[name="csrf-token"]') || document.querySelector('input[name="csrfmiddlewaretoken"]');
+                    if (metaCsrf && metaCsrf.content) formData.append('csrfmiddlewaretoken', metaCsrf.content);
+                    else if (metaCsrf && metaCsrf.value) formData.append('csrfmiddlewaretoken', metaCsrf.value);
+                }
+                
+                const res = await fetch("{% url 'submit_contact_us' %}", {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                
+                const data = await res.json();
+                
+                feedback.style.display = "block";
+                if (data.success) {
+                    feedback.style.background = "rgba(182, 245, 0, 0.1)";
+                    feedback.style.color = "var(--lime)";
+                    feedback.style.border = "1px solid rgba(182, 245, 0, 0.3)";
+                    feedback.textContent = data.message;
+                    form.reset();
+                } else {
+                    feedback.style.background = "rgba(255, 60, 60, 0.1)";
+                    feedback.style.color = "#ff8a8a";
+                    feedback.style.border = "1px solid rgba(255, 60, 60, 0.3)";
+                    feedback.textContent = data.message || "Terjadi kesalahan.";
+                }
+            } catch(err) {
+                feedback.style.display = "block";
+                feedback.style.background = "rgba(255, 60, 60, 0.1)";
+                feedback.style.color = "#ff8a8a";
+                feedback.style.border = "1px solid rgba(255, 60, 60, 0.3)";
+                feedback.textContent = "Koneksi terputus. Silakan coba lagi.";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Send Message";
+            }
+        });
+    }
+});
+</script>

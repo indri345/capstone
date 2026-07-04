@@ -1,6 +1,7 @@
 .venv/ 
 env/ 
-env/ 
 .venv/ 
 __pycache__/ 
 *.pyc 
+venv_clean
+.env

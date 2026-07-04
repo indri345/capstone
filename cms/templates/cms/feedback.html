@@ -338,47 +338,71 @@
 <script>
     (function() {
         // eventId bisa diupdate dari luar via openFeedbackForEvent()
+        // Deteksi dari query string dulu (?event_id=...), kalau tidak ada
+        // coba deteksi dari path URL (/event_detail/<id>/)
         let eventId = new URLSearchParams(window.location.search).get('event_id');
+        if (!eventId) {
+            const pathMatch = window.location.pathname.match(/event_detail\/(\d+)/);
+            if (pathMatch) eventId = pathMatch[1];
+        }
 
         let isWaiting = false;
         let ratingSubmitted = false;
         let currentFeedbackId = null;
+        let feedbackStage = 'normal';
 
         // Key localStorage per event untuk mencegah rating lebih dari sekali
         function ratedKey(eid) { return 'rated_event_' + eid; }
         function hasRated(eid) { return eid && localStorage.getItem(ratedKey(eid)) === '1'; }
         function markRated(eid) { if (eid) localStorage.setItem(ratedKey(eid), '1'); }
 
+        function setInputState(enabled, placeholder = 'Tulis pesan Anda…') {
+            const sendBtn = document.getElementById('sendBtn');
+            const userInput = document.getElementById('userInput');
+            if (sendBtn) sendBtn.disabled = !enabled;
+            if (userInput) {
+                userInput.disabled = !enabled;
+                userInput.placeholder = placeholder;
+            }
+        }
+
         // Reset isi chat ke state awal
         function resetChat() {
             const chatBox = document.getElementById('chatBox');
             if (!chatBox) return;
-            chatBox.innerHTML = `
-                <div class="date-label">Hari ini</div>
-                <div class="msg-row">
-                    <div class="bot-icon">
-                        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                    </div>
-                    <div>
-                        <div class="bubble bot">
-                            Halo! 👋 Saya Digi, asisten digital budaya Pegadaian.<br><br>
-                            Ceritakan pengalaman, kesan, atau masukan Anda terkait <strong>budaya digital di Pegadaian</strong>.
-                        </div>
-                        <div class="quick-replies">
-                            <button class="chip" onclick="fillInput('Pelayanan digitalnya sudah bagus')">👍 Sudah bagus</button>
-                            <button class="chip" onclick="fillInput('Ada saran untuk event pelatihan')">📅 Saran event</button>
-                            <button class="chip" onclick="fillInput('Perlu peningkatan di beberapa hal')">💬 Ada saran</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+            chatBox.innerHTML = `<div class="date-label">Hari ini</div>`;
             isWaiting = false;
             ratingSubmitted = false;
             currentFeedbackId = null;
-            const sendBtn = document.getElementById('sendBtn');
-            if (sendBtn) sendBtn.disabled = false;
+            feedbackStage = 'normal';
+            setInputState(true);
             const userInput = document.getElementById('userInput');
             if (userInput) userInput.value = '';
+        }
+
+        function showInitialGreeting() {
+            const chatBox = document.getElementById('chatBox');
+            if (!chatBox) return;
+            const row = document.createElement('div');
+            row.className = 'msg-row';
+            row.innerHTML = `
+                <div class="bot-icon">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                </div>
+                <div>
+                    <div class="bubble bot">
+                        Halo! 👋 Saya Digi, asisten digital budaya Pegadaian.<br><br>
+                        Ceritakan pengalaman, kesan, atau masukan Anda terkait <strong>budaya digital di Pegadaian</strong>.
+                    </div>
+                    <div class="quick-replies">
+                        <button class="chip" onclick="fillInput('Pelayanan digitalnya sudah bagus')">👍 Sudah bagus</button>
+                        <button class="chip" onclick="fillInput('Ada saran untuk event pelatihan')">📅 Saran event</button>
+                        <button class="chip" onclick="fillInput('Perlu peningkatan di beberapa hal')">💬 Ada saran</button>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(row);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         // Tampilkan blok rating langsung saat buka dari past event
@@ -388,6 +412,8 @@
             const row = document.createElement('div');
             row.className = 'msg-row';
             if (hasRated(eventId)) {
+                feedbackStage = 'normal';
+                setInputState(true);
                 row.innerHTML = `
                     <div class="bot-icon">
                         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
@@ -398,23 +424,15 @@
                     </div>
                 `;
             } else {
-                ratingSubmitted = false;
+                feedbackStage = 'normal';
+                setInputState(true, 'Ceritakan pengalamanmu di event ini…');
                 row.innerHTML = `
                     <div class="bot-icon">
                         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
                     </div>
                     <div class="bubble bot">
-                        Halo! 👋 Bagaimana pengalaman kamu di event ini?<br>Yuk kasih rating dulu!
-                        <div class="rating-wrap">
-                            <p class="rating-label">Beri rating untuk event ini</p>
-                            <div class="stars" id="stars">
-                                <button type="button" onclick="setRating(1)">★</button>
-                                <button type="button" onclick="setRating(2)">★</button>
-                                <button type="button" onclick="setRating(3)">★</button>
-                                <button type="button" onclick="setRating(4)">★</button>
-                                <button type="button" onclick="setRating(5)">★</button>
-                            </div>
-                        </div>
+                        Halo! 👋 Bagaimana pengalaman kamu di event ini?<br>
+                        Ceritakan dulu ya, nanti kamu bisa kasih rating bintang setelahnya. 😊
                     </div>
                 `;
             }
@@ -428,17 +446,33 @@
             if (!popup) return;
             const isOpening = !popup.classList.contains('show');
             if (isOpening) {
-                // Jika dari event berbeda, reset chat
                 if (fromEventId && fromEventId !== eventId) {
                     eventId = fromEventId;
-                    resetChat();
                 }
+                resetChat();
                 popup.classList.add('show');
-                if (eventId) showImmediateRating();
+                if (eventId) {
+                    showImmediateRating();
+                } else {
+                    showInitialGreeting();
+                }
                 const userInput = document.getElementById('userInput');
                 if (userInput) userInput.focus();
             } else {
                 popup.classList.remove('show');
+            }
+        };
+
+        // Dipanggil dari tombol "Feedback" di halaman event (past events)
+        // Contoh pemakaian: <button onclick="openFeedbackForEvent(25)">Feedback</button>
+        window.openFeedbackForEvent = function(id) {
+            const popup = document.getElementById('chatPopup');
+            if (popup && !popup.classList.contains('show')) {
+                window.toggleChatWidget(String(id));
+            } else if (id && String(id) !== eventId) {
+                eventId = String(id);
+                resetChat();
+                showImmediateRating();
             }
         };
 
@@ -466,6 +500,20 @@
 
             const text = input.value.trim();
             if (!text) return;
+
+            if (feedbackStage === 'suggestion') {
+                appendMsg('user', text);
+                input.value = '';
+                const botMsg = appendBotBubble();
+                botMsg.innerHTML = 'Terima kasih atas sarannya! 🙏 Kami akan menindaklanjutinya.';
+                feedbackStage = 'done';
+                setInputState(false, 'Percakapan selesai');
+                return;
+            }
+            if (feedbackStage === 'done') {
+                showToast('Percakapan sudah selesai. Tutup dan buka kembali bila ingin memberi input lain.');
+                return;
+            }
 
             appendMsg('user', text);
             input.value = '';
@@ -514,6 +562,7 @@
 
                 if (data.show_rating === true && !hasRated(eventId)) {
                     ratingSubmitted = false;
+                    feedbackStage = 'rate';
                     const ratingDiv = appendBotBubble();
                     ratingDiv.innerHTML = `
                         <div class="rating-wrap">
@@ -527,6 +576,7 @@
                             </div>
                         </div>
                     `;
+                    setInputState(false);
                 } else if (data.show_rating === true && hasRated(eventId)) {
                     const ratingDiv = appendBotBubble();
                     ratingDiv.innerHTML = 'Kamu sudah memberikan rating untuk event ini. Terima kasih! 🙏';
@@ -577,6 +627,8 @@
                 const msg = appendBotBubble();
                 const stars = '★'.repeat(value) + '☆'.repeat(5 - value);
                 msg.innerHTML = `Rating <strong>${stars}</strong> berhasil disimpan 🎉<br>Terima kasih atas feedback Anda.`;
+                feedbackStage = 'askSuggestion';
+                askSuggestion();
                 chatBox.scrollTop = chatBox.scrollHeight;
                 showToast('✅ Rating berhasil disimpan');
             })
@@ -585,6 +637,43 @@
                 ratingSubmitted = false;
                 btns.forEach(b => { b.disabled = false; });
             });
+        };
+
+        function askSuggestion() {
+            const chatBox = document.getElementById('chatBox');
+            const msg = appendBotBubble();
+            msg.innerHTML = `
+                Terima kasih atas ratingnya! 😊<br>
+                Apakah kamu ingin memberi saran tambahan untuk event ini?
+                <div class="quick-replies">
+                    <button class="chip" onclick="replySuggestion('Ya')">Ya</button>
+                    <button class="chip" onclick="replySuggestion('Tidak')">Tidak</button>
+                </div>
+            `;
+            setInputState(false);
+        }
+
+        window.replySuggestion = function(answer) {
+            const chatBox = document.getElementById('chatBox');
+            appendMsg('user', answer);
+            const botMsg = appendBotBubble();
+            if (answer.toLowerCase() === 'ya') {
+                feedbackStage = 'suggestion';
+                botMsg.innerHTML = 'Silakan ketik saranmu di bawah ini. Kami sangat menghargai masukanmu.';
+                setInputState(true, 'Tulis saran kamu…');
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else {
+                feedbackStage = 'done';
+                botMsg.innerHTML = 'Terima kasih atas partisipasimu! Sampai jumpa lagi 👋';
+                setInputState(false, 'Percakapan selesai');
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                // Tutup pop-up otomatis setelah user memilih "Tidak"
+                setTimeout(function() {
+                    const popup = document.getElementById('chatPopup');
+                    if (popup) popup.classList.remove('show');
+                }, 1200);
+            }
         };
 
         function appendMsg(type, text) {

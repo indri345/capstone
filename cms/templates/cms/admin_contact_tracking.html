@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Tracking — Admin</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%);
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .navbar { background: linear-gradient(to right, #3b82f6, #60a5fa); display: flex; justify-content: space-between; padding: 15px 40px; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { color: white; font-weight: 600; text-decoration: none; font-size: 18px; }
+        .nav-links { display: flex; align-items: center; }
+        .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
+        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
+        .nav-links a.active { border-bottom: 2px solid white; padding-bottom: 4px; }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.3s;
+            margin-left: 20px;
+        }
+        .logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .container { width: 90%; margin: 25px auto; padding-bottom: 40px; }
+
+        .hero {
+            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+            padding: 28px 30px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+        }
+        .hero h1 { font-size: 24px; color: white; }
+        .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255, 255, 255, 0.9); }
+
+        .filter-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+        
+        .search-input {
+            border: none; border-radius: 999px; padding: 10px 20px; font-size: 13px;
+            background: rgba(255,255,255,0.85); min-width: 300px;
+        }
+        .btn-search {
+            background: #1e293b; color: white; border: none; border-radius: 999px;
+            padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+
+        /* Action buttons Vertical Stack Support */
+        .action-stack { display: flex; flex-direction: column; gap: 6px; width: 80px; margin: 0 auto; align-items: center; }
+        .action-stack .btn-action { 
+            padding: 0 !important; 
+            height: 26px !important; 
+            width: 80px !important; 
+            max-width: 80px !important;
+            min-width: 80px !important;
+            font-size: 11px !important; 
+            display: flex !important; 
+            align-items: center !important; 
+            justify-content: center !important; 
+            box-sizing: border-box !important;
+            margin: 0 !important;
+        }
+        .action-stack form { margin: 0; display: flex; width: 80px; }
+
+        .att-table {
+            background: rgba(255,255,255,0.9);
+            border-radius: 18px;
+            overflow: visible;
+            margin-bottom: 30px;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+        th { background: #f8fafc; padding: 16px 24px; font-size: 12.5px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 16px 24px; font-size: 13.5px; color: #1e293b; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(255,255,255,1); }
+
+        .btn-action {
+            display: inline-flex; justify-content: center; align-items: center;
+            border: 1px solid transparent; border-radius: 6px; padding: 6px 12px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; text-decoration: none;
+        }
+        .btn-view { background: #eff6ff; color: #3b82f6; border-color: transparent; }
+        .btn-view:hover { background: #dbeafe; border-color: transparent; }
+        .btn-read { background: #f8fafc; color: #1e293b; border-color: #e2e8f0; }
+        .btn-read:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .btn-replied { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .btn-replied:hover { background: #dbeafe; border-color: #93c5fd; }
+        .btn-delete { background: #fef2f2; color: #dc2626; border-color: transparent; }
+        .btn-delete:hover { background: #fee2e2; border-color: transparent; }
+
+        .modal-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center;
+            align-items: center; z-index: 2000;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background: white; padding: 30px; border-radius: 16px; width: 500px;
+            max-width: 90%; position: relative;
+        }
+        .modal-card h3 { margin-bottom: 15px; font-size: 18px; }
+        .modal-card p { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px; cursor: pointer;
+            background: none; border: none; font-size: 18px; color: #64748b;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="{% url 'admin_home' %}" class="logo">Pegadaian Digital Culture</a>
+        <div class="nav-links">
+            <a href="/admin-home/" class="{% if request.path == '/admin-home/' %}active{% endif %}">Control</a>
+            <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
+            <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
+            <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
+            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
+            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;text-decoration:none;">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Contact Us Tracking</h1>
+            <p>Kelola dan pantau semua pesan Contact Us yang masuk dari halaman User.</p>
+        </div>
+
+        <div class="filter-bar">
+            <form method="GET" action="">
+                <input type="text" name="q" class="search-input" placeholder="Cari nama atau email..." value="{{ search_query }}">
+                <button type="submit" class="btn-search">Search</button>
+                {% if search_query %}
+                <a href="{% url 'admin_contact_tracking' %}" style="margin-left: 10px; font-size: 13px; color: #475569; text-decoration: none;">Reset</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="att-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Name</th>
+                        <th style="width: 18%;">Email</th>
+                        <th style="width: 15%; white-space: nowrap;">Submitted At</th>
+                        <th style="width: 22%;">Message Preview</th>
+                        <th style="width: 18%;">Status</th>
+                        <th style="width: 12%; text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                    <tr style="height: 140px; box-sizing: border-box;">
+                        <td style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.full_name }}</td>
+                        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.email }}</td>
+                        <td style="white-space: nowrap;">{{ contact.created_at|date:"d M Y, H:i" }}</td>
+                        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #64748b;">{{ contact.message|truncatechars:30 }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; height: 100%;">
+                                {% if contact.status == 'Replied' %}
+                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Replied &bull; PIC: {{ contact.pic }}</span>
+                                {% elif contact.status == 'Read' %}
+                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dbeafe; color: #1d4ed8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Read</span>
+                                {% else %}
+                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Unread</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="action-stack">
+                                <button type="button" class="btn-action btn-view" 
+                                    onclick="openContactModal('{{ contact.full_name|escapejs }}', '{{ contact.email|escapejs }}', '{{ contact.created_at|date:'d M Y, H:i'|escapejs }}', '{{ contact.message|escapejs }}', '{{ contact.status|escapejs }}', '{{ contact.pic|escapejs }}')">
+                                    Lihat
+                                </button>
+                                
+                                {% if contact.status != 'Read' and contact.status != 'Replied' %}
+                                <form action="{% url 'admin_update_contact_status' contact.id %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="Read">
+                                    <button type="submit" class="btn-action btn-read">Read</button>
+                                </form>
+                                {% endif %}
+                                
+                                {% if contact.status != 'Replied' %}
+                                <button type="button" class="btn-action btn-replied" onclick="openRepliedModal({{ contact.id }})">Replied</button>
+                                {% endif %}
+
+                                <form action="{% url 'admin_delete_contact' contact.id %}" method="post" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pesan ini?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-action btn-delete">Hapus</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">
+                            Tidak ada data kontak ditemukan.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Detail Contact -->
+    <div class="modal-overlay" id="contactModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeContactModal()">×</button>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <h3 id="modalName" style="margin-bottom: 0;">Nama Pengirim</h3>
+                <div id="modalStatusBadge"></div>
+            </div>
+            <p style="color: #64748b; font-size: 12px; margin-bottom: 20px;">
+                <span id="modalEmail"></span> • <span id="modalDate"></span>
+            </p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; font-size: 13px; color: #1e293b; white-space: pre-wrap; line-height: 1.6; margin-bottom: 10px;" id="modalMessage">
+            </div>
+            <p id="modalPic" style="font-size: 12px; color: #15803d; font-weight: 600; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- Modal Input PIC -->
+    <div class="modal-overlay" id="repliedModal">
+        <div class="modal-card" style="width: 400px;">
+            <button class="modal-close" onclick="closeRepliedModal()">×</button>
+            <h3 style="margin-bottom: 10px; font-size: 16px;">Mark as Replied</h3>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Silakan masukkan nama PIC yang menangani pesan ini.</p>
+            <form id="repliedForm" method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="Replied">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px;">PIC Name <span style="color:#ef4444;">*</span></label>
+                    <input type="text" name="pic" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; outline: none;" placeholder="Contoh: Kezia">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-action" style="background: #f1f5f9; color: #475569; padding: 8px 16px; font-size: 13px; border: 1px solid #e2e8f0;" onclick="closeRepliedModal()">Batal</button>
+                    <button type="submit" class="btn-action" style="background: #2563eb; color: white; padding: 8px 16px; font-size: 13px;">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openContactModal(name, email, date, message, status, pic) {
+            document.getElementById('modalName').textContent = name;
+            document.getElementById('modalEmail').textContent = email;
+            document.getElementById('modalDate').textContent = date;
+            document.getElementById('modalMessage').textContent = message;
+            
+            let statusHtml = '';
+            if (status === 'Replied') {
+                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d;">Replied</span>';
+            } else if (status === 'Read') {
+                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dbeafe; color: #1d4ed8;">Read</span>';
+            } else {
+                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569;">Unread</span>';
+            }
+            document.getElementById('modalStatusBadge').innerHTML = statusHtml;
+
+            const picEl = document.getElementById('modalPic');
+            if (status === 'Replied' && pic && pic !== 'None') {
+                picEl.textContent = 'PIC: ' + pic;
+                picEl.style.display = 'block';
+            } else {
+                picEl.style.display = 'none';
+            }
+
+            document.getElementById('contactModal').classList.add('open');
+        }
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('open');
+        }
+
+        function openRepliedModal(contactId) {
+            const form = document.getElementById('repliedForm');
+            form.action = "{% url 'admin_update_contact_status' 0 %}".replace('0', contactId);
+            document.getElementById('repliedModal').classList.add('open');
+        }
+        function closeRepliedModal() {
+            document.getElementById('repliedModal').classList.remove('open');
+        }
+
+
+    </script>
+</body>
+</html>

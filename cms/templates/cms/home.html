@@ -159,10 +159,10 @@
         .core-bento { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 8px; }
         @media (max-width: 991.98px) { .core-bento { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 575.98px) { .core-bento { grid-template-columns: repeat(2, 1fr); } }
-        .category-card { padding: 28px 18px; border-radius: var(--radius-md); background: var(--card); color: var(--ink); font-weight: 700; font-size: 15px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 1px solid var(--border); box-shadow: var(--shadow-soft); position: relative; overflow: hidden; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 130px; text-align: left; }
-        .category-card .dot { width: 30px; height: 30px; border-radius: 9px; background: var(--forest); margin-bottom: auto; }
-        .category-card:hover { background: var(--forest); color: white; transform: translateY(-5px); box-shadow: var(--shadow-card); border-color: var(--forest); }
-        .category-card:hover .dot { background: var(--lime); }
+        .category-card { padding: 20px; border-radius: var(--radius-md); background: var(--card); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 1px solid var(--border); box-shadow: var(--shadow-soft); position: relative; overflow: hidden; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; min-height: 130px; }
+        .category-card .core-logo { height: 90px; width: 100%; object-fit: contain; margin: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: scale(1.35); }
+        .category-card:hover { background: var(--forest); transform: translateY(-5px); box-shadow: var(--shadow-card); border-color: var(--forest); }
+        .category-card:hover .core-logo { filter: brightness(0) invert(1); transform: scale(1.45); }
         .category-card:active, .category-card:focus { outline: none; box-shadow: 0 0 0 3px rgba(182,245,0,0.5), var(--shadow-card); transform: scale(0.98); }
 
         /* REVEAL */
@@ -335,23 +335,23 @@
         <div class="core-bento">
             <button class="category-card" data-bs-toggle="modal" data-bs-target="#recommendedModal"
                 data-core-slug="integrity" data-core-name="Integrity">
-                <span class="dot"></span><span>Integrity</span>
+                <img src="{% static 'cms/1. Integrity_Values Brilian Way.png' %}" class="core-logo" alt="Integrity">
             </button>
             <button class="category-card" data-bs-toggle="modal" data-bs-target="#recommendedModal"
                 data-core-slug="collaborative" data-core-name="Collaborative">
-                <span class="dot"></span><span>Collaborative</span>
+                <img src="{% static 'cms/2. Collaborative_Values Brilian Way.png' %}" class="core-logo" alt="Collaborative">
             </button>
             <button class="category-card" data-bs-toggle="modal" data-bs-target="#recommendedModal"
                 data-core-slug="accountability" data-core-name="Accountability">
-                <span class="dot"></span><span>Accountability</span>
+                <img src="{% static 'cms/3. Accountability_Values Brilian Way.png' %}" class="core-logo" alt="Accountability">
             </button>
             <button class="category-card" data-bs-toggle="modal" data-bs-target="#recommendedModal"
                 data-core-slug="growth-mindset" data-core-name="Growth Mindset">
-                <span class="dot"></span><span>Growth Mindset</span>
+                <img src="{% static 'cms/4. Growth Mindset_Values Brilian Way.png' %}" class="core-logo" alt="Growth Mindset">
             </button>
             <button class="category-card" data-bs-toggle="modal" data-bs-target="#recommendedModal"
                 data-core-slug="customer-focus" data-core-name="Customer Focus">
-                <span class="dot"></span><span>Customer Focus</span>
+                <img src="{% static 'cms/5. Customer Focus_Values Brilian Way.png' %}" class="core-logo" alt="Customer Focus">
             </button>
         </div>
     </div>
@@ -368,6 +368,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="modal-eyebrow mb-1">Deskripsi</div>
+                        <div id="recommendedDescription" class="fs-6 text-dark" style="line-height: 1.6; font-weight: 500;">-</div>
+                    </div>
                     <div class="mb-4">
                         <div class="modal-eyebrow mb-1">Makna Perilaku</div>
                         <div id="recommendedMeaning" class="fs-6 text-dark" style="line-height: 1.6;">-</div>
@@ -442,14 +446,7 @@
     </div>
 </div>
 
-<!-- FOOTER -->
-<footer class="footer-custom text-center">
-    <div class="container">
-        <p class="mb-1 fw-semibold">Gade Tower - Pegadaian Kantor Pusat</p>
-        <p class="mb-3">Email: budaya.kerja.pusat@pegadaian.co.id</p>
-        <small>© 2026 Pegadaian Digital Culture. All Rights Reserved.</small>
-    </div>
-</footer>
+{% include 'cms/footer_contact.html' %}
 
 {% include 'cms/feedback.html' %}
 
@@ -493,22 +490,27 @@ document.addEventListener("DOMContentLoaded", function () {
     // Core Value data
     const valueData = {
         "Integrity": {
+            description: "Menjunjung tinggi profesionalisme, etika, dan kejujuran dengan mempertimbangkan risiko dalam setiap tindakan.",
             meaning: "Konsisten jujur, dapat dipercaya, dan memegang komitmen meski tidak diawasi.",
             examples: ["Transparan saat menyampaikan progress & risiko.", "Menjaga kerahasiaan data dan informasi internal perusahaan.", "Berani mengatakan 'tidak' untuk hal yang menyimpang dari regulasi."]
         },
         "Collaborative": {
+            description: "Bersinergi dan berkontribusi aktif untuk mencapai tujuan bersama.",
             meaning: "Bekerja bersama lintas fungsi/tim untuk hasil terbaik, saling mendukung, serta terbuka terhadap ide-ide baru.",
             examples: ["Aktif meminta/memberi bantuan saat menghadapi kendala teknis.", "Menyelaraskan tujuan & ekspektasi bersama sebelum memulai eksekusi.", "Berbagi pengetahuan melalui program sharing session secara periodik."]
         },
         "Accountability": {
+            description: "Tanggung jawab penuh terhadap pengembangan people, disiplin dalam eksekusi untuk mencapai hasil optimal.",
             meaning: "Bertanggung jawab penuh atas setiap keputusan, tindakan, dan hasil kerja dengan fokus pada solusi.",
             examples: ["Memiliki ownership yang jelas untuk setiap tugas yang didelegasikan.", "Menyelesaikan pekerjaan secara tuntas (close the loop).", "Mengevaluasi kegagalan untuk perbaikan proses ke depan."]
         },
         "Growth Mindset": {
+            description: "Adaptif, inovatif, dan terbuka terhadap proses pembelajaran di setiap tahap perubahan.",
             meaning: "Terbuka untuk terus belajar, adaptif terhadap perubahan teknologi, dan konstan meningkatkan kapabilitas diri.",
             examples: ["Mengeksplorasi metode kerja baru yang divalidasi dengan basis data.", "Minta feedback berkala untuk iterasi pengembangan diri.", "Meningkatkan keterampilan digital selaras arah transformasi perusahaan."]
         },
         "Customer Focus": {
+            description: "Berempati memberikan layanan dan solusi yang sesuai dengan kebutuhan nasabah.",
             meaning: "Mengutamakan kebutuhan pelanggan internal maupun eksternal guna memberikan pengalaman layanan terbaik.",
             examples: ["Merancang solusi berbasis kebutuhan riil pengguna, bukan asumsi subjektif.", "Mengembangkan purwarupa produk (prototype) secara cepat untuk diuji.", "Memastikan standar pelayanan berjalan responsif, ringkas, dan konsisten."]
         }
@@ -517,6 +519,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const recModalEl    = document.getElementById("recommendedModal");
     const recTitleEl    = document.getElementById("recommendedModalTitle");
     const recSubtitleEl = document.getElementById("recommendedModalSubtitle");
+    const recDescriptionEl = document.getElementById("recommendedDescription");
     const recMeaningEl  = document.getElementById("recommendedMeaning");
     const recExamplesEl = document.getElementById("recommendedExamples");
     const recLoadingEl  = document.getElementById("recommendedLoading");
@@ -552,7 +555,8 @@ document.addEventListener("DOMContentLoaded", function () {
         recTitleEl.textContent = name;
         recSubtitleEl.textContent = "Panduan & agenda digitalisasi berbasis budaya kerja";
 
-        const copy = valueData[name] || { meaning: "-", examples: [] };
+        const copy = valueData[name] || { description: "-", meaning: "-", examples: [] };
+        recDescriptionEl.textContent = copy.description || "-";
         recMeaningEl.textContent = copy.meaning || "-";
         recExamplesEl.innerHTML = "";
         (copy.examples || []).forEach(function (ex) {
@@ -589,6 +593,58 @@ window.closeLoginModal = function () {
 document.getElementById("loginOverlay").addEventListener("click", function (e) {
     if (e.target === this) closeLoginModal();
 });
+
+// REAL ENGAGEMENT TRACKING
+// Measures actual time-on-page and scroll depth, then reports it to
+// /track/ so the admin dashboard's "Engagement Score" / "Avg Time" reflect
+// real visitor behavior instead of a hardcoded constant.
+(function () {
+    const pageName = 'home';
+    const startTime = Date.now();
+    let maxScrollDepth = 0;
+    let sent = false;
+
+    function updateScrollDepth() {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const depth = docHeight > 0 ? Math.min(1, scrollTop / docHeight) : 0;
+        maxScrollDepth = Math.max(maxScrollDepth, depth);
+    }
+    window.addEventListener('scroll', updateScrollDepth, { passive: true });
+
+    function sendActivity() {
+        if (sent) return;
+        sent = true;
+
+        const visitDuration = Math.round((Date.now() - startTime) / 1000);
+        // Simple, transparent heuristic: 60% weight on time spent (capped at
+        // 60s), 40% weight on how far down the page the visitor scrolled.
+        const timeScore = Math.min(1, visitDuration / 60);
+        const engagementScore = Math.round(((timeScore * 0.6) + (maxScrollDepth * 0.4)) * 100) / 100;
+
+        const payload = JSON.stringify({
+            page: pageName,
+            visit_duration: visitDuration,
+            engagement_score: engagementScore,
+        });
+
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/track/', new Blob([payload], { type: 'application/json' }));
+        } else {
+            fetch('/track/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true,
+            }).catch(function () {});
+        }
+    }
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') sendActivity();
+    });
+    window.addEventListener('pagehide', sendActivity);
+})();
 
 // Handle login form — submit via fetch, redirect on success, show error on failure
 document.getElementById("loginForm").addEventListener("submit", async function (e) {
