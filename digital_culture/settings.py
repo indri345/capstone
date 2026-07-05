@@ -37,8 +37,11 @@ INSTALLED_APPS = [
     'axes',
 ]
 
+# AUTHENTICATION_BACKENDS = [
+#     'axes.backends.AxesStandaloneBackend',
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 AXES_FAILURE_LIMIT = 5
