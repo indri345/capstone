@@ -4,6 +4,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.db.models import Sum, Avg, Q, Count, Max
 from django.db import IntegrityError
@@ -180,18 +183,85 @@ def admin_forgot_password(request):
             error = 'Alamat email wajib diisi.'
         else:
             user = User.objects.filter(email__iexact=email).first()
-            if user and (user.is_staff or user.is_superuser):
+            if user and (user.is_staff or user.is_superuser) and user.is_active:
+                uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                reset_path = f"/admin-reset-password/{uidb64}/{token}/"
+                reset_link = request.build_absolute_uri(reset_path)
+
                 subject = 'Reset Password Admin Digital Culture'
                 message = (
                     f'Halo {user.username},\n\n'
                     'Kami menerima permintaan reset password untuk akun admin Digital Culture.\n'
-                    'Silakan hubungi administrator sistem atau gunakan fitur reset password pada lingkungan Anda.\n\n'
-                    'Jika Anda tidak pernah mengajukan permintaan ini, abaikan email ini.'
+                    'Klik link di bawah ini untuk membuat password baru:\n\n'
+                    f'{reset_link}\n\n'
+                    'Link ini hanya berlaku sekali pakai dan akan kedaluwarsa demi keamanan.\n'
+                    'Jika Anda tidak pernah mengajukan permintaan ini, abaikan email ini — '
+                    'password Anda tidak akan berubah.'
                 )
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+                # fail_silently=True: jangan bocorkan status pengiriman email
+                # ke response (mencegah enumeration lewat timing/error SMTP).
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=True)
+            # `success = True` selalu di-set terlepas email ditemukan atau
+            # tidak, supaya orang tidak bisa menebak-nebak email admin mana
+            # yang valid dari respons halaman ini (anti user-enumeration).
             success = True
 
     return render(request, 'cms/admin_forgot_password.html', {'success': success, 'error': error})
+
+
+def admin_reset_password(request, uidb64, token):
+    """
+    Halaman set password baru, diakses lewat link unik di email forgot
+    password. Token dari `default_token_generator` otomatis invalid
+    setelah dipakai sekali (karena tergantung hash password saat ini —
+    begitu password diganti, token lama otomatis tidak valid lagi) dan
+    juga expired otomatis setelah PASSWORD_RESET_TIMEOUT (default 3 hari).
+    """
+    if request.session.get('is_admin'):
+        return redirect('admin_home')
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    token_valid = user is not None and default_token_generator.check_token(user, token)
+
+    if not token_valid:
+        return render(request, 'cms/admin_reset_password.html', {
+            'token_valid': False,
+        })
+
+    error = None
+    if request.method == 'POST':
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if not password1 or not password2:
+            error = 'Kedua kolom password wajib diisi.'
+        elif password1 != password2:
+            error = 'Konfirmasi password tidak cocok.'
+        else:
+            from django.contrib.auth.password_validation import validate_password, ValidationError
+            try:
+                validate_password(password1, user=user)
+            except ValidationError as e:
+                error = ' '.join(e.messages)
+
+        if not error:
+            user.set_password(password1)
+            user.save()
+            return render(request, 'cms/admin_reset_password.html', {
+                'token_valid': True,
+                'success': True,
+            })
+
+    return render(request, 'cms/admin_reset_password.html', {
+        'token_valid': True,
+        'error': error,
+    })
 
 
 # Single canonical admin_logout (used by url 'admin_logout')
@@ -713,13 +783,14 @@ def chat_with_ai(request):
         return response
 
     except Exception as e:
-
-        import traceback
-        traceback.print_exc()
+        # Log detail lengkap di server untuk debugging — JANGAN dikirim ke
+        # user, karena bisa membocorkan detail internal (path file, query
+        # database, API key error, dll).
+        logger.exception('chat_with_ai gagal memproses pesan')
 
         return JsonResponse({
             'status': 'error',
-            'message': str(e)
+            'message': 'Terjadi kesalahan pada server. Silakan coba lagi beberapa saat.'
         }, status=500)
 
 # =========================================================

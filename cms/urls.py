@@ -23,6 +23,7 @@ urlpatterns = [
     # Admin auth
     path('admin-login/', views.admin_login, name='admin_login'),
     path('admin-forgot-password/', views.admin_forgot_password, name='admin_forgot_password'),
+    path('admin-reset-password/<str:uidb64>/<str:token>/', views.admin_reset_password, name='admin_reset_password'),
     path('admin-logout/', views.admin_logout_view, name='admin_logout'),
 
     # Admin pages
