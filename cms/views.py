@@ -3,6 +3,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Sum, Avg, Q, Count, Max
 from django.db import IntegrityError
 from django.db.models import ProtectedError
@@ -162,6 +164,32 @@ def admin_login(request):
     if is_ajax:
         return JsonResponse({'error': 'Metode request tidak valid.'}, status=400)
     return render(request, 'cms/admin_login.html', {'error': error})
+
+
+def admin_forgot_password(request):
+    if request.session.get('is_admin'):
+        return redirect('admin_home')
+
+    success = False
+    error = None
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if not email:
+            error = 'Alamat email wajib diisi.'
+        else:
+            user = User.objects.filter(email__iexact=email).first()
+            if user and (user.is_staff or user.is_superuser):
+                subject = 'Reset Password Admin Digital Culture'
+                message = (
+                    f'Halo {user.username},\n\n'
+                    'Kami menerima permintaan reset password untuk akun admin Digital Culture.\n'
+                    'Silakan hubungi administrator sistem atau gunakan fitur reset password pada lingkungan Anda.\n\n'
+                    'Jika Anda tidak pernah mengajukan permintaan ini, abaikan email ini.'
+                )
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+            success = True
+
+    return render(request, 'cms/admin_forgot_password.html', {'success': success, 'error': error})
 
 
 # Single canonical admin_logout (used by url 'admin_logout')

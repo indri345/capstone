@@ -126,6 +126,9 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'digitalculture@localhost')
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.up.railway.app',
     'https://web-production-36aaf.up.railway.app',

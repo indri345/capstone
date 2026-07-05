@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -46,3 +47,25 @@ class ExploreAdminAttributeTests(TestCase):
         self.assertContains(response, attribute.attribute_type)
         self.assertContains(response, attribute.file_url)
         self.assertContains(response, 'data-gdrive="https://example.com/poster.pdf"')
+
+
+class AdminForgotPasswordTests(TestCase):
+    @patch('cms.views.send_mail')
+    def test_admin_forgot_password_submits_registered_admin_email(self, mock_send_mail):
+        admin_user = User.objects.create_user(
+            username='admin-reset',
+            email='admin-reset@example.com',
+            password='secret123',
+            is_staff=True,
+            is_superuser=True,
+        )
+
+        response = self.client.post(
+            reverse('admin_forgot_password'),
+            {'email': admin_user.email},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Jika alamat email terdaftar')
+        mock_send_mail.assert_called_once()
