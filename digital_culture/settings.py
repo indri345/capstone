@@ -37,17 +37,18 @@ INSTALLED_APPS = [
     'axes',
 ]
 
-# AUTHENTICATION_BACKENDS = [
-#     'axes.backends.AxesStandaloneBackend',
-#     'django.contrib.auth.backends.ModelBackend',
-# ]
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1  # jam
 
-# --- MIDDLEWARE didefinisikan dulu, baru axes disisipkan di atas ---
+
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1
+AXES_IPWARE_PROXY_COUNT = 1
+AXES_IPWARE_META_PRECEDENCE_ORDER = ['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR']
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
