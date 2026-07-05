@@ -138,11 +138,13 @@ def admin_login(request):
     # error ever shown.
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-    if request.session.get('is_admin'):
+    if request.session.get('is_admin') and request.user.is_authenticated:
         if is_ajax:
             return JsonResponse({'redirect': '/admin-home/'})
         return redirect('admin_home')
-
+    elif request.session.get('is_admin'):
+        # session is_admin ada tapi auth Django-nya nggak valid — bersihkan
+        request.session.flush()
     error = None
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -196,7 +198,7 @@ def admin_forgot_password(request):
 def admin_logout_view(request):
     request.session.flush()
     logout(request)
-    return redirect('home')
+    return redirect('admin_login')
 
 
 # =====================
