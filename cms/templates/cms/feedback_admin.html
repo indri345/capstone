@@ -18,7 +18,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%);
+            background: #F4F8F5;
             color: #1e293b;
             min-height: 100vh;
         }
@@ -39,11 +39,21 @@
         }
 
         .hero {
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+            background: linear-gradient(135deg, #013320, #016632 130%);
             padding: 30px;
             border-radius: 18px;
             margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
         }
+
+        .hero::before {
+            content: "";
+            position: absolute; top: -50px; right: -50px;
+            width: 180px; height: 180px; background: #A6F24A; opacity: 0.15; border-radius: 50%;
+        }
+
+        .hero h1, .hero p { position: relative; color: #fff; }
 
         .hero h1 {
             font-size: 24px;
@@ -66,7 +76,7 @@
         .filter-select {
             padding: 10px 16px;
             border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(1, 102, 50, 0.15);
             background: rgba(255, 255, 255, 0.9);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
             color: #1e293b;
@@ -79,8 +89,8 @@
 
         .filter-select:hover,
         .filter-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            border-color: #016632;
+            box-shadow: 0 4px 12px rgba(1, 102, 50, 0.1);
         }
 
         /* ===== SENTIMENT CARDS ===== */
@@ -98,13 +108,13 @@
             padding: 22px;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08);
+            box-shadow: 0 8px 32px rgba(1, 51, 32, 0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(30, 64, 175, 0.12);
+            box-shadow: 0 12px 40px rgba(1, 51, 32, 0.12);
         }
 
         .card h4 {
@@ -162,7 +172,7 @@
             border-radius: 16px;
             padding: 22px;
             border: 1px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08);
+            box-shadow: 0 8px 32px rgba(1, 51, 32, 0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -170,7 +180,7 @@
         .insights-card:hover,
         .box:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(30, 64, 175, 0.12);
+            box-shadow: 0 12px 40px rgba(1, 51, 32, 0.12);
         }
 
         .chart-card,
@@ -271,7 +281,7 @@
 
         .feedback-scroll::-webkit-scrollbar-thumb,
         .words-scroll::-webkit-scrollbar-thumb {
-            background: rgba(59, 130, 246, 0.25);
+            background: rgba(1, 102, 50, 0.25);
             border-radius: 999px;
         }
 
@@ -339,9 +349,9 @@
         .btn-action {
             padding: 6px 12px;
             border-radius: 8px;
-            border: 1px solid #3b82f6;
-            background: #eff6ff;
-            color: #1d4ed8;
+            border: 1px solid #016632;
+            background: #EEF9E4;
+            color: #013d20;
             cursor: pointer;
             font-size: 11px;
             font-weight: 600;
@@ -349,7 +359,7 @@
         }
 
         .btn-action:hover {
-            background: #dbeafe;
+            background: #DFF5C0;
         }
 
         .pagination {
@@ -416,7 +426,7 @@
         }
 
         .analytics-panel li span {
-            background: #3b82f6;
+            background: #016632;
             color: white;
             padding: 2px 8px;
             border-radius: 999px;
@@ -433,31 +443,26 @@
             }
         }
     
-        /* NAVBAR ADMIN CSS */
-        .navbar { background: linear-gradient(to right, #3b82f6, #60a5fa); display: flex; justify-content: space-between; padding: 15px 40px; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { color: white; font-weight: 600; text-decoration: none; font-size: 18px; }
-        .nav-links { display: flex; align-items: center; }
-        .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
-        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
-        .nav-links a.active { border-bottom: 2px solid white; padding-bottom: 4px; }
-        @media (max-width: 600px) {
-            .navbar {
-                flex-direction: column;
-                gap: 12px;
-                padding: 15px 20px;
-                align-items: center;
-            }
-            .nav-links {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            .nav-links a {
-                margin-left: 0;
-                font-size: 13px;
-                padding: 4px 8px;
-            }
+        .navbar {
+            background: var(--forest);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 40px; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 4px 24px rgba(11,31,23,0.18);
+        }
+        .logo { color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); font-size: 13px; font-weight: 800; }
+        .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
+        .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--ink); background: var(--lime); }
+        .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
+        .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
+
+        @media (max-width: 900px) {
+            .navbar { flex-direction: column; gap: 12px; padding: 16px 20px; align-items: stretch; }
+            .logo { justify-content: center; }
+            .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .nav-links a { font-size: 12.5px; padding: 7px 12px; }
         }
 
     </style>
@@ -529,7 +534,7 @@
                     </div>
                     
                     <!-- Apply Filter Button -->
-                    <button type="submit" style="padding: 0 16px; height: 40px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Apply Filters</button>
+                    <button type="submit" style="padding: 0 16px; height: 40px; background: #016632; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Apply Filters</button>
                 </div>
 
                 <!-- Right side: Event Name Search with Autocomplete -->
@@ -617,8 +622,8 @@
                         uiField.innerHTML = '';
                         selected.forEach(opt => {
                             const chip = document.createElement('div');
-                            chip.style.background = '#e0f2fe';
-                            chip.style.color = '#0369a1';
+                            chip.style.background = '#E4FFC7';
+                            chip.style.color = '#1a5c00';
                             chip.style.padding = '2px 8px';
                             chip.style.borderRadius = '16px';
                             chip.style.fontSize = '12px';
