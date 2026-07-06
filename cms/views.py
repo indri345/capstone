@@ -2130,11 +2130,13 @@ def admin_attendance_list(request):
 
     Semua query string filter dipisah prefix-nya agar tidak bertabrakan:
       - status            -> filter tabel verifikasi
+      - event             -> filter tabel verifikasi berdasarkan nama event
       - period/year/quarter/month       -> filter Attendance Analytics
       - granularity/p_year              -> filter Participation Analytics
     """
     # ---------- 1) ATTENDANCE VERIFICATION (tabel) ----------
     current_status = request.GET.get('status', '').strip()
+    current_event = request.GET.get('event', '').strip()
 
     registrations = EventRegistration.objects.prefetch_related('attendances').order_by('-registered_at')
     if current_status:
@@ -2142,6 +2144,13 @@ def admin_attendance_list(request):
             registrations = registrations.filter(attendances__isnull=True)
         else:
             registrations = registrations.filter(attendances__status=current_status)
+
+    if current_event:
+        # Filter pakai `event_name` (bukan FK `event`) karena cukup banyak
+        # registrasi lama tidak punya `event` FK terisi (NULL) dan hanya
+        # tersambung ke event lewat teks nama — filter di sini tetap harus
+        # bisa menjangkau data lama itu, bukan cuma yang FK-nya lengkap.
+        registrations = registrations.filter(event_name=current_event)
 
     attendances_data = []
     for reg in registrations:
@@ -2158,6 +2167,15 @@ def admin_attendance_list(request):
 
     status_choices = list(Attendance.STATUS_CHOICES)
     status_choices.append(('not_attended', 'Belum Absen'))
+
+    # Daftar nama event untuk dropdown filter, diambil dari data registrasi
+    # itu sendiri (bukan dari tabel Event) supaya event lama yang FK-nya
+    # kosong tetap muncul sebagai pilihan filter yang valid.
+    event_options = list(
+        EventRegistration.objects.order_by('event_name')
+        .values_list('event_name', flat=True)
+        .distinct()
+    )
 
     # ---------- 2) ATTENDANCE ANALYTICS (Step 8) ----------
     period  = request.GET.get('period', 'monthly')
@@ -2256,6 +2274,8 @@ def admin_attendance_list(request):
         'summary':        summary,
         'current_status': current_status,
         'status_choices': status_choices,
+        'current_event':  current_event,
+        'event_options':  event_options,
 
         # Attendance Analytics (Step 8)
         'period': period,
@@ -2293,7 +2313,6 @@ def admin_attendance_list(request):
         'latest_period_count': participation_values[-1] if participation_values else 0,
     }
     return render(request, 'cms/admin_attendance_list.html', context)
-
 
 @admin_login_required
 def admin_verify_attendance(request, attendance_id):
