@@ -9,137 +9,155 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --forest: #013320;
+            --forest-light: #016632;
+            --lime: #A6F24A;
+            --lime-light: #EEF9E4;
+            --ink: #0f172a;
+            --slate-body: #F8FAFC;
+            --slate-border: #E2E8F0;
+            --slate-text: #475569;
+            --slate-muted: #64748B;
+            --card-bg: #FFFFFF;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-pill: 999px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 20px -2px rgba(1, 51, 32, 0.05), 0 2px 12px -1px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 20px 25px -5px rgba(1, 51, 32, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
 
         body {
-            background: #F4F8F5;
-            color: #1e293b;
+            background: var(--slate-body);
+            color: var(--ink);
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Navbar Layout */
         .navbar {
             background: var(--forest);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 40px; position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 4px 24px rgba(11,31,23,0.18);
+            padding: 16px 40px; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 4px 30px rgba(1, 31, 23, 0.15);
         }
-        .logo { color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
-        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); font-size: 13px; font-weight: 800; }
-        .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
-        .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
+        .logo { color: #fff; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--forest); font-size: 13px; font-weight: 800; }
+        .nav-links { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,0.05); }
+        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: var(--radius-pill); transition: all 0.2s ease; white-space: nowrap; }
         .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
-        .nav-links a.active { color: var(--ink); background: var(--lime); }
-        .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
+        .nav-links a.active { color: var(--forest); background: var(--lime); font-weight: 600; }
+        .nav-logout { background: rgba(239,68,68,0.15) !important; color: #FFA3A3 !important; font-weight: 600 !important; }
         .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
 
         @media (max-width: 900px) {
-            .navbar { flex-direction: column; gap: 12px; padding: 16px 20px; align-items: stretch; }
+            .navbar { flex-direction: column; gap: 14px; padding: 16px 20px; align-items: stretch; }
             .logo { justify-content: center; }
             .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
-            .nav-links a { font-size: 12.5px; padding: 7px 12px; }
+            .nav-links a { font-size: 12px; padding: 6px 12px; }
         }
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 999px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: 0.3s;
-            margin-left: 20px;
-        }
-        .logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
 
-        .container { width: 90%; margin: 25px auto; padding-bottom: 40px; }
+        .container { width: 92%; max-width: 1400px; margin: 32px auto; padding-bottom: 60px; }
 
+        /* Header / Hero Banner */
         .hero {
-            background: linear-gradient(135deg, #013320, #016632 130%);
-            padding: 28px 30px;
-            border-radius: 18px;
-            margin-bottom: 25px;
+            background: linear-gradient(135deg, var(--forest), var(--forest-light));
+            padding: 36px 40px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 30px;
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: var(--shadow-md);
         }
         .hero::before {
-            content: "";
-            position: absolute; top: -50px; right: -50px;
-            width: 180px; height: 180px; background: #A6F24A; opacity: 0.15; border-radius: 50%;
+            content: ""; position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; background: var(--lime); opacity: 0.12; border-radius: 50%; blur: 40px;
         }
-        .hero h1 { position: relative; font-size: 24px; color: white; }
-        .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255, 255, 255, 0.9); }
+        .hero h1 { font-size: 26px; font-weight: 600; color: white; letter-spacing: -0.5px; }
+        .hero p { font-size: 14px; margin-top: 6px; color: rgba(255, 255, 255, 0.8); font-weight: 300; }
 
-        .filter-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
-        
+        /* Modern Bento Summary Cards */
+        .bento-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 30px; }
+        .metric-card { background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); }
+        .metric-card p { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate-muted); font-weight: 600; }
+        .metric-card h3 { font-size: 28px; font-weight: 700; color: var(--ink); margin-top: 4px; }
+
+        /* Utility Actions Bar */
+        .filter-bar { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-box { display: flex; gap: 8px; align-items: center; width: 100%; max-width: 420px; position: relative; }
         .search-input {
-            border: none; border-radius: 999px; padding: 10px 20px; font-size: 13px;
-            background: rgba(255,255,255,0.85); min-width: 300px;
+            width: 100%; border: 1px solid var(--slate-border); border-radius: var(--radius-pill); padding: 10px 20px; font-size: 13px;
+            background: var(--card-bg); color: var(--ink); outline: none; transition: all 0.2s ease; box-shadow: var(--shadow-sm);
         }
+        .search-input:focus { border-color: var(--forest-light); box-shadow: 0 0 0 3px rgba(1, 102, 50, 0.1); }
         .btn-search {
-            background: #016632; color: white; border: none; border-radius: 999px;
-            padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+            background: var(--forest); color: white; border: none; border-radius: var(--radius-pill);
+            padding: 10px 24px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
+        .btn-search:hover { background: var(--forest-light); }
 
-        /* Action buttons Vertical Stack Support */
-        .action-stack { display: flex; flex-direction: column; gap: 6px; width: 80px; margin: 0 auto; align-items: center; }
+        /* Action Column Layout styling */
+        .action-stack { display: flex; flex-direction: column; gap: 6px; width: 90px; margin: 0 auto; }
         .action-stack .btn-action { 
-            padding: 0 !important; 
-            height: 26px !important; 
-            width: 80px !important; 
-            max-width: 80px !important;
-            min-width: 80px !important;
-            font-size: 11px !important; 
-            display: flex !important; 
-            align-items: center !important; 
-            justify-content: center !important; 
-            box-sizing: border-box !important;
-            margin: 0 !important;
+            height: 28px; width: 100%; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center; 
+            box-sizing: border-box; border-radius: 6px; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease-in-out;
         }
-        .action-stack form { margin: 0; display: flex; width: 80px; }
+        .action-stack form { margin: 0; width: 100%; }
 
+        /* Refined Data Table Visuals */
         .att-table {
-            background: rgba(255,255,255,0.9);
-            border-radius: 18px;
-            overflow: visible;
-            margin-bottom: 30px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--slate-border);
+            box-shadow: var(--shadow-lg);
         }
         table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
-        th { background: #f8fafc; padding: 16px 24px; font-size: 12.5px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 16px 24px; font-size: 13.5px; color: #1e293b; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        th { background: #F8FAFC; padding: 16px 20px; font-size: 11.5px; color: var(--slate-text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--slate-border); }
+        td { padding: 18px 20px; font-size: 13.5px; color: var(--ink); border-bottom: 1px solid var(--slate-border); vertical-align: middle; word-wrap: break-word; }
         tr:last-child td { border-bottom: none; }
-        tr:hover { background: rgba(255,255,255,1); }
+        tr:hover { background: #FAFDFB; }
 
-        .btn-action {
-            display: inline-flex; justify-content: center; align-items: center;
-            border: 1px solid transparent; border-radius: 6px; padding: 6px 12px; font-size: 12px;
-            font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; text-decoration: none;
-        }
-        .btn-view { background: #EEF9E4; color: #016632; border-color: transparent; }
-        .btn-view:hover { background: #DFF5C0; border-color: transparent; }
-        .btn-read { background: #f8fafc; color: #1e293b; border-color: #e2e8f0; }
-        .btn-read:hover { background: #f1f5f9; border-color: #cbd5e1; }
-        .btn-replied { background: #EEF9E4; color: #016632; border-color: #CFEFA0; }
-        .btn-replied:hover { background: #DFF5C0; border-color: #A6F24A; }
-        .btn-delete { background: #fef2f2; color: #dc2626; border-color: transparent; }
-        .btn-delete:hover { background: #fee2e2; border-color: transparent; }
+        /* Styled Buttons Components */
+        .btn-view { background: var(--lime-light); color: var(--forest-light); }
+        .btn-view:hover { background: var(--lime); color: var(--forest); }
+        .btn-read { background: #f1f5f9; color: var(--slate-text); border-color: var(--slate-border) !important; }
+        .btn-read:hover { background: #e2e8f0; color: var(--ink); }
+        .btn-replied { background: #F0FDF4; color: #16a34a; border-color: #bbf7d0 !important; }
+        .btn-replied:hover { background: #dcfce7; }
+        .btn-delete { background: transparent; color: #ef4444; }
+        .btn-delete:hover { background: #fef2f2; border-color: #fca5a5 !important; }
 
+        /* Dynamic Status Badges */
+        .status-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge-replied { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-read { background: var(--lime-light); color: var(--forest); border: 1px solid #DFF5C0; }
+        .badge-unread { background: #f1f5f9; color: var(--slate-muted); border: 1px solid var(--slate-border); }
+
+        /* Modals Modern Polish */
         .modal-overlay {
             position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center;
-            align-items: center; z-index: 2000;
+            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+            transition: all 0.3s ease;
         }
         .modal-overlay.open { display: flex; }
         .modal-card {
-            background: white; padding: 30px; border-radius: 16px; width: 500px;
-            max-width: 90%; position: relative;
+            background: var(--card-bg); padding: 32px; border-radius: var(--radius-lg); width: 540px;
+            max-width: 92%; position: relative; box-shadow: var(--shadow-lg); border: 1px solid var(--slate-border);
         }
-        .modal-card h3 { margin-bottom: 15px; font-size: 18px; }
-        .modal-card p { font-size: 14px; margin-bottom: 10px; line-height: 1.6; }
+        .modal-card h3 { font-size: 18px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
         .modal-close {
-            position: absolute; top: 20px; right: 20px; cursor: pointer;
-            background: none; border: none; font-size: 18px; color: #64748b;
+            position: absolute; top: 24px; right: 24px; cursor: pointer;
+            background: #f1f5f9; border: none; font-size: 18px; color: var(--slate-muted);
+            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
         }
+        .modal-close:hover { background: #e2e8f0; color: var(--ink); }
 
     </style>
 </head>
@@ -147,14 +165,16 @@
 <body>
 
     <div class="navbar">
-        <a href="{% url 'admin_home' %}" class="logo">Pegadaian Digital Culture</a>
+        <a href="{% url 'admin_home' %}" class="logo">
+            <span class="logo-mark">P</span>Pegadaian Digital Culture
+        </a>
         <div class="nav-links">
             <a href="/admin-home/" class="{% if request.path == '/admin-home/' %}active{% endif %}">Control</a>
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
             <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
             <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
-            <a href="{% url 'admin_logout' %}" style="background:#ef4444;color:white;padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;text-decoration:none;">Logout</a>
+            <a href="{% url 'admin_logout' %}" class="nav-logout">Logout</a>
         </div>
     </div>
 
@@ -164,12 +184,27 @@
             <p>Kelola dan pantau semua pesan Contact Us yang masuk dari halaman User.</p>
         </div>
 
+        <div class="bento-metrics">
+            <div class="metric-card">
+                <p>Total Submissions</p>
+                <h3>{{ contacts|length }}</h3>
+            </div>
+            <div class="metric-card">
+                <p>Awaiting Response</p>
+                <h3 style="color: #f59e0b;">-</h3>
+            </div>
+            <div class="metric-card">
+                <p>Resolved</p>
+                <h3 style="color: #10b981;">-</h3>
+            </div>
+        </div>
+
         <div class="filter-bar">
-            <form method="GET" action="">
+            <form method="GET" action="" class="search-box">
                 <input type="text" name="q" class="search-input" placeholder="Cari nama atau email..." value="{{ search_query }}">
                 <button type="submit" class="btn-search">Search</button>
                 {% if search_query %}
-                <a href="{% url 'admin_contact_tracking' %}" style="margin-left: 10px; font-size: 13px; color: #475569; text-decoration: none;">Reset</a>
+                <a href="{% url 'admin_contact_tracking' %}" style="margin-left: 8px; font-size: 13px; color: var(--slate-muted); text-decoration: none; font-weight: 500;">Reset</a>
                 {% endif %}
             </form>
         </div>
@@ -178,31 +213,29 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 15%;">Name</th>
-                        <th style="width: 18%;">Email</th>
-                        <th style="width: 15%; white-space: nowrap;">Submitted At</th>
-                        <th style="width: 22%;">Message Preview</th>
-                        <th style="width: 18%;">Status</th>
-                        <th style="width: 12%; text-align: center;">Actions</th>
+                        <th style="width: 16%;">Name</th>
+                        <th style="width: 20%;">Email</th>
+                        <th style="width: 16%;">Submitted At</th>
+                        <th style="width: 24%;">Message Preview</th>
+                        <th style="width: 14%;">Status</th>
+                        <th style="width: 10%; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for contact in contacts %}
-                    <tr style="height: 140px; box-sizing: border-box;">
-                        <td style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.full_name }}</td>
-                        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.email }}</td>
-                        <td style="white-space: nowrap;">{{ contact.created_at|date:"d M Y, H:i" }}</td>
-                        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #64748b;">{{ contact.message|truncatechars:30 }}</td>
+                    <tr>
+                        <td style="font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.full_name }}</td>
+                        <td style="color: var(--slate-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ contact.email }}</td>
+                        <td style="color: var(--slate-muted); white-space: nowrap; font-size: 12.5px;">{{ contact.created_at|date:"d M Y, H:i" }}</td>
+                        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--slate-muted);">{{ contact.message|truncatechars:30 }}</td>
                         <td>
-                            <div style="display: flex; align-items: center; height: 100%;">
-                                {% if contact.status == 'Replied' %}
-                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Replied &bull; PIC: {{ contact.pic }}</span>
-                                {% elif contact.status == 'Read' %}
-                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #DFF5C0; color: #013d20; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Read</span>
-                                {% else %}
-                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Unread</span>
-                                {% endif %}
-                            </div>
+                            {% if contact.status == 'Replied' %}
+                            <span class="status-badge badge-replied">Replied &bull; PIC: {{ contact.pic }}</span>
+                            {% elif contact.status == 'Read' %}
+                            <span class="status-badge badge-read">Read</span>
+                            {% else %}
+                            <span class="status-badge badge-unread">Unread</span>
+                            {% endif %}
                         </td>
                         <td style="text-align: center;">
                             <div class="action-stack">
@@ -232,7 +265,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">
+                        <td colspan="6" style="text-align: center; padding: 60px; color: var(--slate-muted); font-size: 14px;">
                             Tidak ada data kontak ditemukan.
                         </td>
                     </tr>
@@ -242,39 +275,37 @@
         </div>
     </div>
 
-    <!-- Modal Detail Contact -->
     <div class="modal-overlay" id="contactModal">
         <div class="modal-card">
             <button class="modal-close" onclick="closeContactModal()">×</button>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                <h3 id="modalName" style="margin-bottom: 0;">Nama Pengirim</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-right: 24px;">
+                <h3 id="modalName">Nama Pengirim</h3>
                 <div id="modalStatusBadge"></div>
             </div>
-            <p style="color: #64748b; font-size: 12px; margin-bottom: 20px;">
-                <span id="modalEmail"></span> • <span id="modalDate"></span>
+            <p style="color: var(--slate-muted); font-size: 13px; margin-bottom: 24px; border-bottom: 1px solid var(--slate-border); padding-bottom: 12px;">
+                <span id="modalEmail" style="color: var(--ink); font-weight: 500;"></span> &bull; <span id="modalDate"></span>
             </p>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; font-size: 13px; color: #1e293b; white-space: pre-wrap; line-height: 1.6; margin-bottom: 10px;" id="modalMessage">
+            <div style="background: var(--slate-body); padding: 20px; border-radius: var(--radius-md); font-size: 13.5px; color: var(--ink); white-space: pre-wrap; line-height: 1.6; margin-bottom: 16px; border: 1px solid var(--slate-border);" id="modalMessage">
             </div>
-            <p id="modalPic" style="font-size: 12px; color: #15803d; font-weight: 600; display: none;"></p>
+            <p id="modalPic" style="font-size: 13px; color: #16a34a; font-weight: 600; display: none;"></p>
         </div>
     </div>
 
-    <!-- Modal Input PIC -->
     <div class="modal-overlay" id="repliedModal">
-        <div class="modal-card" style="width: 400px;">
+        <div class="modal-card" style="width: 420px;">
             <button class="modal-close" onclick="closeRepliedModal()">×</button>
-            <h3 style="margin-bottom: 10px; font-size: 16px;">Mark as Replied</h3>
-            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Silakan masukkan nama PIC yang menangani pesan ini.</p>
+            <h3 style="margin-bottom: 8px; font-size: 18px;">Mark as Replied</h3>
+            <p style="color: var(--slate-muted); font-size: 13px; margin-bottom: 24px;">Silakan masukkan nama PIC yang menangani pesan ini.</p>
             <form id="repliedForm" method="post" action="">
                 {% csrf_token %}
                 <input type="hidden" name="status" value="Replied">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px;">PIC Name <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="pic" required style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; outline: none;" placeholder="Contoh: Kezia">
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--ink);">PIC Name <span style="color:#ef4444;">*</span></label>
+                    <input type="text" name="pic" required style="width: 100%; padding: 11px 16px; border-radius: var(--radius-md); border: 1px solid var(--slate-border); font-size: 13px; outline: none; transition: border 0.2s;" placeholder="Contoh: Kezia" onfocus="this.style.borderColor='var(--forest-light)'" onblur="this.style.borderColor='var(--slate-border)'">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn-action" style="background: #f1f5f9; color: #475569; padding: 8px 16px; font-size: 13px; border: 1px solid #e2e8f0;" onclick="closeRepliedModal()">Batal</button>
-                    <button type="submit" class="btn-action" style="background: #016632; color: white; padding: 8px 16px; font-size: 13px;">Simpan</button>
+                    <button type="button" class="btn-action btn-read" style="padding: 10px 20px; height: auto; width: auto;" onclick="closeRepliedModal()">Batal</button>
+                    <button type="submit" class="btn-action btn-search" style="padding: 10px 20px; height: auto; width: auto; border: none;">Simpan</button>
                 </div>
             </form>
         </div>
@@ -289,17 +320,17 @@
             
             let statusHtml = '';
             if (status === 'Replied') {
-                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d;">Replied</span>';
+                statusHtml = '<span class="status-badge badge-replied">Replied</span>';
             } else if (status === 'Read') {
-                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #DFF5C0; color: #013d20;">Read</span>';
+                statusHtml = '<span class="status-badge badge-read">Read</span>';
             } else {
-                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569;">Unread</span>';
+                statusHtml = '<span class="status-badge badge-unread">Unread</span>';
             }
             document.getElementById('modalStatusBadge').innerHTML = statusHtml;
 
             const picEl = document.getElementById('modalPic');
             if (status === 'Replied' && pic && pic !== 'None') {
-                picEl.textContent = 'PIC: ' + pic;
+                picEl.textContent = 'Assigned PIC: ' + pic;
                 picEl.style.display = 'block';
             } else {
                 picEl.style.display = 'none';
@@ -319,8 +350,6 @@
         function closeRepliedModal() {
             document.getElementById('repliedModal').classList.remove('open');
         }
-
-
     </script>
 </body>
 </html>
