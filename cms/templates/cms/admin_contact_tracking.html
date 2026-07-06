@@ -12,18 +12,32 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
 
         body {
-            background: linear-gradient(135deg, #e4effb 0%, #c9daf1 100%);
+            background: #F4F8F5;
             color: #1e293b;
             min-height: 100vh;
         }
 
-        .navbar { background: linear-gradient(to right, #3b82f6, #60a5fa); display: flex; justify-content: space-between; padding: 15px 40px; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { color: white; font-weight: 600; text-decoration: none; font-size: 18px; }
-        .nav-links { display: flex; align-items: center; }
-        .nav-links a { color: rgba(255, 255, 255, 0.9); text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; transition: 0.3s; }
-        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
-        .nav-links a.active { border-bottom: 2px solid white; padding-bottom: 4px; }
-        
+        .navbar {
+            background: var(--forest);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 40px; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 4px 24px rgba(11,31,23,0.18);
+        }
+        .logo { color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); font-size: 13px; font-weight: 800; }
+        .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
+        .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: var(--ink); background: var(--lime); }
+        .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
+        .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
+
+        @media (max-width: 900px) {
+            .navbar { flex-direction: column; gap: 12px; padding: 16px 20px; align-items: stretch; }
+            .logo { justify-content: center; }
+            .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .nav-links a { font-size: 12.5px; padding: 7px 12px; }
+        }
         .logout-btn {
             background: rgba(255, 255, 255, 0.2);
             color: white;
@@ -41,12 +55,19 @@
         .container { width: 90%; margin: 25px auto; padding-bottom: 40px; }
 
         .hero {
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+            background: linear-gradient(135deg, #013320, #016632 130%);
             padding: 28px 30px;
             border-radius: 18px;
             margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
         }
-        .hero h1 { font-size: 24px; color: white; }
+        .hero::before {
+            content: "";
+            position: absolute; top: -50px; right: -50px;
+            width: 180px; height: 180px; background: #A6F24A; opacity: 0.15; border-radius: 50%;
+        }
+        .hero h1 { position: relative; font-size: 24px; color: white; }
         .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255, 255, 255, 0.9); }
 
         .filter-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
@@ -56,7 +77,7 @@
             background: rgba(255,255,255,0.85); min-width: 300px;
         }
         .btn-search {
-            background: #1e293b; color: white; border: none; border-radius: 999px;
+            background: #016632; color: white; border: none; border-radius: 999px;
             padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
         }
 
@@ -94,12 +115,12 @@
             border: 1px solid transparent; border-radius: 6px; padding: 6px 12px; font-size: 12px;
             font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; text-decoration: none;
         }
-        .btn-view { background: #eff6ff; color: #3b82f6; border-color: transparent; }
-        .btn-view:hover { background: #dbeafe; border-color: transparent; }
+        .btn-view { background: #EEF9E4; color: #016632; border-color: transparent; }
+        .btn-view:hover { background: #DFF5C0; border-color: transparent; }
         .btn-read { background: #f8fafc; color: #1e293b; border-color: #e2e8f0; }
         .btn-read:hover { background: #f1f5f9; border-color: #cbd5e1; }
-        .btn-replied { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-        .btn-replied:hover { background: #dbeafe; border-color: #93c5fd; }
+        .btn-replied { background: #EEF9E4; color: #016632; border-color: #CFEFA0; }
+        .btn-replied:hover { background: #DFF5C0; border-color: #A6F24A; }
         .btn-delete { background: #fef2f2; color: #dc2626; border-color: transparent; }
         .btn-delete:hover { background: #fee2e2; border-color: transparent; }
 
@@ -177,7 +198,7 @@
                                 {% if contact.status == 'Replied' %}
                                 <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Replied &bull; PIC: {{ contact.pic }}</span>
                                 {% elif contact.status == 'Read' %}
-                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dbeafe; color: #1d4ed8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Read</span>
+                                <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #DFF5C0; color: #013d20; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Read</span>
                                 {% else %}
                                 <span style="display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; vertical-align: middle;">Unread</span>
                                 {% endif %}
@@ -253,7 +274,7 @@
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn-action" style="background: #f1f5f9; color: #475569; padding: 8px 16px; font-size: 13px; border: 1px solid #e2e8f0;" onclick="closeRepliedModal()">Batal</button>
-                    <button type="submit" class="btn-action" style="background: #2563eb; color: white; padding: 8px 16px; font-size: 13px;">Simpan</button>
+                    <button type="submit" class="btn-action" style="background: #016632; color: white; padding: 8px 16px; font-size: 13px;">Simpan</button>
                 </div>
             </form>
         </div>
@@ -270,7 +291,7 @@
             if (status === 'Replied') {
                 statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dcfce7; color: #15803d;">Replied</span>';
             } else if (status === 'Read') {
-                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #dbeafe; color: #1d4ed8;">Read</span>';
+                statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #DFF5C0; color: #013d20;">Read</span>';
             } else {
                 statusHtml = '<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f1f5f9; color: #475569;">Unread</span>';
             }
