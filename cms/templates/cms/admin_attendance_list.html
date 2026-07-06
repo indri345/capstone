@@ -301,10 +301,20 @@
 
         <div class="section-title"><span class="dot"></span> Attendance Verification Queue</div>
 
+        <form method="get" class="filter-bar">
+            <input type="hidden" name="status" value="{{ current_status }}">
+            <select name="event" onchange="this.form.submit()">
+                <option value="">Semua Event</option>
+                {% for ev_name in event_options %}
+                <option value="{{ ev_name }}" {% if ev_name == current_event %}selected{% endif %}>{{ ev_name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
         <div class="filter-bar">
-            <a href="?" class="{% if not current_status %}active{% endif %}">Semua</a>
+            <a href="?{% if current_event %}event={{ current_event|urlencode }}{% endif %}" class="{% if not current_status %}active{% endif %}">Semua</a>
             {% for value, label in status_choices %}
-            <a href="?status={{ value }}" class="{% if current_status == value %}active{% endif %}">{{ label }}</a>
+            <a href="?status={{ value }}{% if current_event %}&event={{ current_event|urlencode }}{% endif %}" class="{% if current_status == value %}active{% endif %}">{{ label }}</a>
             {% endfor %}
         </div>
 
