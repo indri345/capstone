@@ -612,6 +612,71 @@
             background: var(--bg);
         }
 
+        /* ================= DASHBOARD CARD TABS (merged sub-topics) ================= */
+        .dashboard-card-tabs {
+            display: inline-flex;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 3px;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .dashboard-tab-btn {
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .dashboard-tab-btn.active {
+            background: var(--forest);
+            color: #fff;
+        }
+
+        .dashboard-tab-panel {
+            display: none;
+        }
+
+        .dashboard-tab-panel.active {
+            display: block;
+        }
+
+        .dashboard-tab-subheader {
+            padding: 12px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .dashboard-tab-subheader span {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-card-tabs {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
         /* ================= INITIATIVE CARDS ================= */
         .initiative-grid {
             display: grid;
@@ -939,6 +1004,85 @@
             align-items: center;
         }
 
+        /* ================= CORE POLICY (Brilian Way — landasan, bukan program) ================= */
+        .core-policy-card {
+            background: linear-gradient(135deg, var(--forest) 0%, var(--forest-2) 100%);
+            border-radius: var(--radius-lg);
+            padding: 36px 40px;
+            margin-bottom: 50px;
+            color: #fff;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .core-policy-card::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(182, 245, 0, 0.18), transparent 70%);
+        }
+
+        .core-policy-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(182, 245, 0, 0.16);
+            border: 1px solid rgba(182, 245, 0, 0.4);
+            color: var(--lime);
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .core-policy-card h4 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .core-policy-card p {
+            font-size: 0.98rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.82);
+            max-width: 720px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .core-policy-pillars {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+        }
+
+        .core-policy-pillar {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 999px;
+        }
+
+        @media (max-width: 767.98px) {
+            .core-policy-card {
+                padding: 28px 24px;
+            }
+        }
+
         /* ================= MEDIA SECTION ================= */
         .media-hub-grid {
             display: grid;
@@ -983,73 +1127,6 @@
             width: 100%;
             height: 100%;
             border: none;
-        }
-
-        /* ================= TIMELINE ================= */
-        .timeline-container {
-            margin: 20px 0 50px;
-            position: relative;
-            padding-left: 24px;
-        }
-
-        .timeline-container::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 10px;
-            bottom: 10px;
-            width: 3px;
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 24px;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 4px;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: var(--lime);
-            border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .timeline-date {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--forest);
-            margin-bottom: 4px;
-            background: var(--lime-soft);
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        .timeline-content {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 16px;
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-soft);
-            margin-top: 8px;
-        }
-
-        .timeline-content h6 {
-            margin: 0 0 6px;
-            font-weight: 700;
-        }
-
-        .timeline-content p {
-            margin: 0;
-            font-size: 0.85rem;
-            color: var(--text-muted);
         }
 
         /* ================= DOWNLOADS ================= */
@@ -1166,6 +1243,27 @@
             </div>
         </div>
 
+        <!-- CORE POLICY SECTION (Brilian Way — landasan/pedoman, bukan program) -->
+        <div class="section-heading reveal" id="core-policy">
+            <h5>Kebijakan Inti</h5>
+            <div class="section-line"></div>
+        </div>
+        <div class="core-policy-card reveal">
+            <div class="core-policy-eyebrow">🧭 Pedoman Perilaku Perusahaan</div>
+            <h4>Brilian Way</h4>
+            <p>Brilian Way adalah kebijakan dan pedoman perilaku dasar yang menjadi payung dari seluruh nilai inti
+                Pegadaian. Berbeda dari program-program di bawah — yang merupakan bentuk pelaksanaan konkret di
+                lapangan — Brilian Way adalah landasan yang mendasari bagaimana setiap insan Pegadaian bekerja,
+                berinteraksi, dan mengambil keputusan.</p>
+            <div class="core-policy-pillars">
+                <span class="core-policy-pillar">Integrity</span>
+                <span class="core-policy-pillar">Collaborative</span>
+                <span class="core-policy-pillar">Accountability</span>
+                <span class="core-policy-pillar">Growth Mindset</span>
+                <span class="core-policy-pillar">Customer Focus</span>
+            </div>
+        </div>
+
         <!-- CORE PROGRAMS SECTION -->
         <div class="section-heading reveal" id="core-programs">
             <h5>Core Programs</h5>
@@ -1173,25 +1271,9 @@
         </div>
         <div class="program-hub-grid reveal">
 
-            <!-- 1. Brilian Way -->
+            <!-- 1. 3S (Senyum, Salam, Sapa) -->
             <div class="program-hub-card">
-                <div class="ph-title">1. Brilian Way</div>
-                <p class="ph-desc">Brilian Way merupakan fondasi utama budaya kerja Pegadaian yang menjadi pedoman
-                    perilaku seluruh insan perusahaan. Program ini menanamkan nilai Integrity, Collaborative,
-                    Accountability, Growth Mindset, dan Customer Focus sebagai dasar dalam bekerja, berinteraksi, dan
-                    mengambil keputusan.</p>
-                <div class="ph-attributes">
-                    <span class="ph-chip">Integrity</span>
-                    <span class="ph-chip">Teamwork</span>
-                    <span class="ph-chip">Responsibility</span>
-                    <span class="ph-chip">Adaptability</span>
-                    <span class="ph-chip">Service Excellence</span>
-                </div>
-            </div>
-
-            <!-- 2. 3S (Senyum, Salam, Sapa) -->
-            <div class="program-hub-card">
-                <div class="ph-title">2. 3S (Senyum, Salam, Sapa)</div>
+                <div class="ph-title">1. 3S (Senyum, Salam, Sapa)</div>
                 <p class="ph-desc">Program 3S bertujuan membangun budaya pelayanan yang hangat, ramah, dan profesional
                     melalui kebiasaan Senyum, Salam, dan Sapa. Program ini menjadi dasar dalam menciptakan pengalaman
                     positif bagi nasabah dan memperkuat hubungan interpersonal di lingkungan kerja.</p>
@@ -1202,9 +1284,9 @@
                 </div>
             </div>
 
-            <!-- 3. Gerakan 5R -->
+            <!-- 2. Gerakan 5R -->
             <div class="program-hub-card">
-                <div class="ph-title">3. Gerakan 5R</div>
+                <div class="ph-title">2. Gerakan 5R</div>
                 <p class="ph-desc">Gerakan 5R berfokus pada pembentukan lingkungan kerja yang tertata, efisien, dan
                     nyaman. Melalui Ringkas, Rapi, Resik, Rawat, dan Rajin, Pegadaian mendorong terciptanya disiplin
                     kerja yang mendukung produktivitas dan kualitas operasional.</p>
@@ -1216,9 +1298,9 @@
                 </div>
             </div>
 
-            <!-- 4. Leader as Role Model -->
+            <!-- 3. Leader as Role Model -->
             <div class="program-hub-card">
-                <div class="ph-title">4. Leader as Role Model</div>
+                <div class="ph-title">3. Leader as Role Model</div>
                 <p class="ph-desc">Program ini menekankan pentingnya peran pemimpin sebagai contoh nyata dalam
                     menjalankan budaya perusahaan. Seorang leader diharapkan menjadi role model dalam integritas,
                     pengambilan keputusan, komunikasi, dan pengembangan tim.</p>
@@ -1230,9 +1312,9 @@
                 </div>
             </div>
 
-            <!-- 5. Culture Agent / Agent of Change -->
+            <!-- 4. Culture Agent / Agent of Change -->
             <div class="program-hub-card">
-                <div class="ph-title">5. Culture Agent / Agent of Change</div>
+                <div class="ph-title">4. Culture Agent / Agent of Change</div>
                 <p class="ph-desc">Culture Agent adalah penggerak utama transformasi budaya di lingkungan kerja. Mereka
                     berperan sebagai katalis perubahan, membantu menyebarkan nilai perusahaan, dan memastikan
                     implementasi budaya berjalan secara konsisten di seluruh unit.</p>
@@ -1244,9 +1326,9 @@
                 </div>
             </div>
 
-            <!-- 6. Employee Engagement Program -->
+            <!-- 5. Employee Engagement Program -->
             <div class="program-hub-card">
-                <div class="ph-title">6. Employee Engagement Program</div>
+                <div class="ph-title">5. Employee Engagement Program</div>
                 <p class="ph-desc">Program ini dirancang untuk meningkatkan keterlibatan pegawai melalui berbagai
                     aktivitas internal, kolaborasi tim, dan pengembangan hubungan kerja. Tujuannya adalah menciptakan
                     lingkungan kerja yang lebih positif, aktif, dan produktif.</p>
@@ -1258,9 +1340,9 @@
                 </div>
             </div>
 
-            <!-- 7. Customer Centric Movement -->
+            <!-- 6. Customer Centric Movement -->
             <div class="program-hub-card">
-                <div class="ph-title">7. Customer Centric Movement</div>
+                <div class="ph-title">6. Customer Centric Movement</div>
                 <p class="ph-desc">Program ini membangun pola pikir yang berfokus pada kebutuhan nasabah dengan
                     mengutamakan empati, kecepatan, dan ketepatan dalam memberikan layanan. Seluruh proses kerja
                     diarahkan untuk menciptakan pengalaman terbaik bagi pelanggan.</p>
@@ -1272,9 +1354,9 @@
                 </div>
             </div>
 
-            <!-- 8. Innovation Culture -->
+            <!-- 7. Innovation Culture -->
             <div class="program-hub-card">
-                <div class="ph-title">8. Innovation Culture</div>
+                <div class="ph-title">7. Innovation Culture</div>
                 <p class="ph-desc">Budaya inovasi mendorong setiap insan Pegadaian untuk berpikir kreatif, terbuka
                     terhadap ide baru, dan terus mencari solusi yang lebih baik dalam menghadapi perubahan bisnis dan
                     teknologi.</p>
@@ -1286,9 +1368,9 @@
                 </div>
             </div>
 
-            <!-- 9. Learning & Development -->
+            <!-- 8. Learning & Development -->
             <div class="program-hub-card">
-                <div class="ph-title">9. Learning & Development</div>
+                <div class="ph-title">8. Learning & Development</div>
                 <p class="ph-desc">Program Learning & Development berfokus pada peningkatan kompetensi pegawai melalui
                     pembelajaran berkelanjutan, pelatihan, dan pengembangan skill agar siap menghadapi tantangan masa
                     depan.</p>
@@ -1302,10 +1384,10 @@
 
         </div>
 
-        <!-- 10. Culture Performance Dashboard -->
+        <!-- 9. Culture Performance Dashboard -->
         <div class="section-heading reveal" id="dashboard-section"
             style="margin-top: 50px; flex-direction: column; align-items: flex-start; text-align: left;">
-            <h5 style="font-size: 1.5rem; font-weight: 800; color: var(--ink); margin-bottom: 12px;">10. Culture
+            <h5 style="font-size: 1.5rem; font-weight: 800; color: var(--ink); margin-bottom: 12px;">9. Culture
                 Performance Dashboard</h5>
             <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">Dashboard
                 ini berfungsi sebagai alat monitoring untuk melihat perkembangan implementasi budaya perusahaan, tingkat
@@ -1321,18 +1403,44 @@
 
         <div class="dashboard-grid">
 
+            <!-- MERGED: Culture Activation Program (CAP) cluster — 3S Nasional + Spesifik Kanwil -->
             <div class="dashboard-card reveal">
                 <div class="dashboard-card-header">
-                    <h6>CAP 3S — Senyum, Salam, Sapa Outlet</h6>
-                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                        style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
-                        data-bs-target="#explanationModal" data-title="✨ Standar Pelayanan 3S (Senyum, Salam, Sapa)"
-                        data-content='<p class="mb-4"><strong>3S (Senyum, Salam, Sapa)</strong> merupakan pilar utama standar pelayanan di outlet Pegadaian untuk mewujudkan pelayanan yang hangat, ramah, dan profesional bagi setiap nasabah:</p><div class="d-flex flex-column gap-3"><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">😊</span><div><strong style="color: var(--forest-2); font-size: 14px;">1. Senyum</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Memberikan ekspresi wajah yang hangat dan tulus sejak nasabah pertama kali masuk ke area outlet.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">🙏</span><div><strong style="color: var(--forest-2); font-size: 14px;">2. Salam</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Mengucapkan salam sopan sesuai waktu (pagi/siang/sore) untuk menghormati kedatangan nasabah.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">👋</span><div><strong style="color: var(--forest-2); font-size: 14px;">3. Sapa</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Menyapa nama nasabah (jika sudah tahu) atau menawarkan bantuan dengan nada bicara yang sopan dan jelas.</p></div></div></div>'>Arti
-                        3S</button>
+                    <h6>Culture Activation Program (CAP)</h6>
+                    <div class="dashboard-card-tabs" role="tablist">
+                        <button type="button" class="dashboard-tab-btn active" data-tab-target="tab-cap-3s">3S
+                            Nasional</button>
+                        <button type="button" class="dashboard-tab-btn" data-tab-target="tab-cap-spesifik">Spesifik
+                            Kanwil</button>
+                    </div>
                 </div>
-                <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+
+                <div class="dashboard-tab-panel active" id="tab-cap-3s">
+                    <div class="dashboard-tab-subheader">
+                        <span>CAP 3S — Senyum, Salam, Sapa Outlet</span>
+                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                            style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
+                            data-bs-target="#explanationModal" data-title="✨ Standar Pelayanan 3S (Senyum, Salam, Sapa)"
+                            data-content='<p class="mb-4"><strong>3S (Senyum, Salam, Sapa)</strong> merupakan pilar utama standar pelayanan di outlet Pegadaian untuk mewujudkan pelayanan yang hangat, ramah, dan profesional bagi setiap nasabah:</p><div class="d-flex flex-column gap-3"><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">😊</span><div><strong style="color: var(--forest-2); font-size: 14px;">1. Senyum</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Memberikan ekspresi wajah yang hangat dan tulus sejak nasabah pertama kali masuk ke area outlet.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">🙏</span><div><strong style="color: var(--forest-2); font-size: 14px;">2. Salam</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Mengucapkan salam sopan sesuai waktu (pagi/siang/sore) untuk menghormati kedatangan nasabah.</p></div></div><div class="d-flex align-items-start gap-3 p-3" style="background: #f0faf4; border-radius: var(--radius-sm); border: 1px solid #d4e6da;"><span style="font-size: 24px; line-height: 1;">👋</span><div><strong style="color: var(--forest-2); font-size: 14px;">3. Sapa</strong><p class="mb-0 text-muted" style="font-size: 13px; margin-top: 2px;">Menyapa nama nasabah (jika sudah tahu) atau menawarkan bantuan dengan nada bicara yang sopan dan jelas.</p></div></div></div>'>Arti
+                            3S</button>
+                    </div>
+                    <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+                </div>
+
+                <div class="dashboard-tab-panel" id="tab-cap-spesifik">
+                    <div class="dashboard-tab-subheader">
+                        <span>CAP Spesifik Kantor Wilayah</span>
+                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                            style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
+                            data-bs-target="#explanationModal" data-title="🎯 Culture Activation Program (CAP) Spesifik"
+                            data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;Program budaya yang disusun di masing-masing Kantor Wilayah, yang berfungsi sebagai penggerak untuk mendorong Insan Pegadaian menjalankan perilaku spesifik dalam rangka mendukung pencapaian kinerja yang ditetapkan&lt;/p&gt;">Arti
+                            Program</button>
+                    </div>
+                    <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
+                </div>
             </div>
 
+            <!-- Gerakan 5R — standalone, tidak overlap konsep dengan card lain -->
             <div class="dashboard-card reveal">
                 <div class="dashboard-card-header">
                     <h6>Gerakan 5R Tahun</h6>
@@ -1347,6 +1455,7 @@
                     height="320"></iframe>
             </div>
 
+            <!-- IMotS — standalone, monitoring/audit, tidak overlap konsep dengan card lain -->
             <div class="dashboard-card reveal">
                 <div class="dashboard-card-header">
                     <h6>Integrated Monitoring on the Spot Kantor Cabang (IMotS)</h6>
@@ -1361,85 +1470,53 @@
                     height="320"></iframe>
             </div>
 
+            <!-- MERGED: Forum Komunikasi & Briefing cluster — MBSL + Co-Location + TIB Kanwil -->
             <div class="dashboard-card reveal">
                 <div class="dashboard-card-header">
-                    <h6>Morning Briefing dan Sharing &amp; Learning</h6>
-                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                        style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
-                        data-bs-target="#explanationModal" data-title="📢 Morning Briefing dan Sharing &amp; Learning"
-                        data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Morning Briefing dan Sharing &amp; Learning&lt;/strong&gt; adalah merupakan bagian dari Effective Communication yang bertujuan untuk memastikan tersampaikannya informasi secara efektif, meningkatkan alignment kinerja, serta memperkuat internalisasi Budaya Perusahaan dan penerapan perilaku Core Values Brilian Way;&lt;/p&gt;">Arti
-                        MBSL</button>
+                    <h6>Forum Komunikasi &amp; Briefing</h6>
+                    <div class="dashboard-card-tabs" role="tablist">
+                        <button type="button" class="dashboard-tab-btn active" data-tab-target="tab-mbsl">MBSL</button>
+                        <button type="button" class="dashboard-tab-btn" data-tab-target="tab-colocation">Co-Location</button>
+                        <button type="button" class="dashboard-tab-btn" data-tab-target="tab-tib">TIB Kanwil</button>
+                    </div>
                 </div>
-                <iframe
-                    src="https://datastudio.google.com/embed/reporting/8824ffac-a811-4bdc-b1fe-2e947484c45a/page/p_y2ourx4l0d"
-                    height="320"></iframe>
-            </div>
 
-            <div class="dashboard-card reveal">
-                <div class="dashboard-card-header">
-                    <h6>Forum Komunikasi Co-Location</h6>
-                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                        style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
-                        data-bs-target="#explanationModal" data-title="🤝 Forum Komunikasi Co-Location"
-                        data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Forum Komunikasi Co-Location&lt;/strong&gt; bertujuan menguatkan motivasi, kapasitas dan produktivitas Pengelola Pelayanan Co-location sekaligus mengidentifikasi dan menindaklanjuti pain points yang menjadi kendala di Unit Kerja SENYUM, sehingga tercipta efektivitas dan efisiensi dalam menjalankan peran strategisnya&lt;/p&gt;">Arti
-                        Program</button>
+                <div class="dashboard-tab-panel active" id="tab-mbsl">
+                    <div class="dashboard-tab-subheader">
+                        <span>Morning Briefing dan Sharing &amp; Learning</span>
+                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                            style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
+                            data-bs-target="#explanationModal" data-title="📢 Morning Briefing dan Sharing &amp; Learning"
+                            data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Morning Briefing dan Sharing &amp; Learning&lt;/strong&gt; adalah merupakan bagian dari Effective Communication yang bertujuan untuk memastikan tersampaikannya informasi secara efektif, meningkatkan alignment kinerja, serta memperkuat internalisasi Budaya Perusahaan dan penerapan perilaku Core Values Brilian Way;&lt;/p&gt;">Arti
+                            MBSL</button>
+                    </div>
+                    <iframe
+                        src="https://datastudio.google.com/embed/reporting/8824ffac-a811-4bdc-b1fe-2e947484c45a/page/p_y2ourx4l0d"
+                        height="320"></iframe>
                 </div>
-                <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
-            </div>
 
-            <div class="dashboard-card reveal">
-                <div class="dashboard-card-header">
-                    <h6>CAP Spesifik Kantor Wilayah</h6>
-                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                        style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
-                        data-bs-target="#explanationModal" data-title="🎯 Culture Activation Program (CAP) Spesifik"
-                        data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;Program budaya yang disusun di masing-masing Kantor Wilayah, yang berfungsi sebagai penggerak untuk mendorong Insan Pegadaian menjalankan perilaku spesifik dalam rangka mendukung pencapaian kinerja yang ditetapkan&lt;/p&gt;">Arti
-                        Program</button>
+                <div class="dashboard-tab-panel" id="tab-colocation">
+                    <div class="dashboard-tab-subheader">
+                        <span>Forum Komunikasi Co-Location</span>
+                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                            style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
+                            data-bs-target="#explanationModal" data-title="🤝 Forum Komunikasi Co-Location"
+                            data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Forum Komunikasi Co-Location&lt;/strong&gt; bertujuan menguatkan motivasi, kapasitas dan produktivitas Pengelola Pelayanan Co-location sekaligus mengidentifikasi dan menindaklanjuti pain points yang menjadi kendala di Unit Kerja SENYUM, sehingga tercipta efektivitas dan efisiensi dalam menjalankan peran strategisnya&lt;/p&gt;">Arti
+                            Program</button>
+                    </div>
+                    <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
                 </div>
-                <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
-            </div>
 
-            <div class="dashboard-card reveal">
-                <div class="dashboard-card-header">
-                    <h6>Forum Komunikasi TIB Kantor Wilayah</h6>
-                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
-                        style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
-                        data-bs-target="#explanationModal" data-title="🗓️ Forum Komunikasi TIB Kantor Wilayah"
-                        data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Forum Komunikasi TIB Kantor Wilayah&lt;/strong&gt;&lt;br&gt;Forum Komunikasi TIB yang dilakukan secara mandiri oleh tiap Kantor Wilayah, dengan frekuensi 5 (lima) kali sepanjang tahun 2026, yaitu Bulan Mei, Juni, Agustus, September, dan November 2026.&lt;/p&gt;">Arti
-                        Program</button>
-                </div>
-                <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
-            </div>
-        </div>
-
-        <!-- TIMELINE -->
-        <div class="section-heading reveal" style="margin-top: 50px;">
-            <h5>Culture Activities Timeline</h5>
-            <div class="section-line"></div>
-        </div>
-        <div class="timeline-container reveal">
-            <div class="timeline-item">
-                <span class="timeline-date">Juni 2026</span>
-                <div class="timeline-content">
-                    <h6>Implementasi 5R Skala Nasional</h6>
-                    <p>Penerapan program budaya kerja 5R (Ringkas, Rapi, Resik, Rawat, Rajin) ke seluruh Kantor Cabang
-                        dan Unit Pelayanan secara bertahap.</p>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-date">Juli 2026</span>
-                <div class="timeline-content">
-                    <h6>Culture Challenge Q3 Kick-off</h6>
-                    <p>Kompetisi internal untuk menguji dan memperkuat internalisasi Core Values Brilian Way antar tim
-                        lintas divisi.</p>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-date">Agustus 2026</span>
-                <div class="timeline-content">
-                    <h6>Audit Standar Pelayanan 3S</h6>
-                    <p>Pelaksanaan audit komprehensif terkait Senyum, Salam, Sapa pada outlet-outlet untuk memastikan
-                        kualitas layanan terbaik.</p>
+                <div class="dashboard-tab-panel" id="tab-tib">
+                    <div class="dashboard-tab-subheader">
+                        <span>Forum Komunikasi TIB Kantor Wilayah</span>
+                        <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                            style="font-size: 11px; font-weight: 700; padding: 4px 10px;" data-bs-toggle="modal"
+                            data-bs-target="#explanationModal" data-title="🗓️ Forum Komunikasi TIB Kantor Wilayah"
+                            data-content="&lt;p style=&quot;font-size: 14.5px; line-height: 1.7;&quot;&gt;&lt;strong&gt;Forum Komunikasi TIB Kantor Wilayah&lt;/strong&gt;&lt;br&gt;Forum Komunikasi TIB yang dilakukan secara mandiri oleh tiap Kantor Wilayah, dengan frekuensi 5 (lima) kali sepanjang tahun 2026, yaitu Bulan Mei, Juni, Agustus, September, dan November 2026.&lt;/p&gt;">Arti
+                            Program</button>
+                    </div>
+                    <iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID" height="320"></iframe>
                 </div>
             </div>
         </div>
@@ -1528,6 +1605,20 @@
             });
         }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+        // DASHBOARD CARD TAB SWITCHER (for merged sub-topic cards)
+        document.querySelectorAll('.dashboard-card-tabs').forEach(function (tabGroup) {
+            const card = tabGroup.closest('.dashboard-card');
+            tabGroup.querySelectorAll('.dashboard-tab-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    tabGroup.querySelectorAll('.dashboard-tab-btn').forEach(b => b.classList.remove('active'));
+                    card.querySelectorAll('.dashboard-tab-panel').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = document.getElementById(btn.getAttribute('data-tab-target'));
+                    if (target) target.classList.add('active');
+                });
+            });
+        });
 
         // DYNAMIC MODAL INJECTOR
         const explanationModal = document.getElementById('explanationModal');

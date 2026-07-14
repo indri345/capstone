@@ -328,11 +328,18 @@ class Feedback(models.Model):
     # supaya status "Feedback Submitted" bisa dicek per-email di Event Detail.
     participant_email = models.EmailField(max_length=255, blank=True, null=True, db_index=True)
     message         = models.TextField()
-    sentiment       = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, default='neutral')
+    sentiment       = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
     rating          = models.IntegerField(null=True, blank=True)
     source_platform = models.CharField(max_length=50, choices=SOURCE_CHOICES, default='web')
     created_at      = models.DateTimeField(auto_now_add=True)
     ai_response     = models.TextField(blank=True, null=True)
+    # True hanya untuk pesan chat yang benar-benar feedback asli (bukan
+    # sekadar tanya info) DAN, kalau terkait event, pengirimnya sudah
+    # attendance-verified untuk event itu. Semua pesan tetap disimpan
+    # (row ini tidak pernah None/kosong) supaya riwayat chat/history utuh;
+    # field ini hanya penanda mana yang boleh dihitung sebagai statistik
+    # feedback/sentiment asli.
+    is_genuine_feedback = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'feedback'
@@ -451,3 +458,4 @@ class ContactUs(models.Model):
     class Meta:
         managed = False
         db_table = 'contact_us'
+        

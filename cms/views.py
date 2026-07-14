@@ -199,9 +199,24 @@ def admin_forgot_password(request):
                     'Jika Anda tidak pernah mengajukan permintaan ini, abaikan email ini — '
                     'password Anda tidak akan berubah.'
                 )
-                # fail_silently=True: jangan bocorkan status pengiriman email
-                # ke response (mencegah enumeration lewat timing/error SMTP).
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=True)
+                # fail_silently=True di parameter send_mail tetap dipakai supaya
+                # response ke user tidak bocorin status pengiriman (anti
+                # user-enumeration). TAPI errornya sekarang di-log manual di
+                # server supaya bisa didiagnosis dari terminal/log Railway,
+                # bukan ketelen tanpa jejak sama sekali.
+                try:
+                    sent_count = send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+                    if sent_count:
+                        logger.info("Forgot-password email terkirim ke user_id=%s", user.pk)
+                    else:
+                        logger.warning("send_mail return 0 (tidak ada email terkirim) untuk user_id=%s", user.pk)
+                except Exception:
+                    logger.exception("Gagal kirim forgot-password email untuk user_id=%s", user.pk)
+            else:
+                logger.info(
+                    "Forgot-password: email '%s' tidak match ke admin manapun (atau tidak aktif/bukan staff).",
+                    email,
+                )
             # `success = True` selalu di-set terlepas email ditemukan atau
             # tidak, supaya orang tidak bisa menebak-nebak email admin mana
             # yang valid dari respons halaman ini (anti user-enumeration).
@@ -566,7 +581,7 @@ def chat_with_ai(request):
             'neutral': 0,
             'negative': 0,
         }
-        for row in Feedback.objects.values('sentiment').annotate(count=Count('feedback_id')):
+        for row in Feedback.objects.filter(is_genuine_feedback=True).values('sentiment').annotate(count=Count('feedback_id')):
             sentiment_counts[row['sentiment']] = row['count']
 
         events_per_core = EventCoreValue.objects.values(
@@ -719,16 +734,38 @@ def chat_with_ai(request):
             .strip()
         )
 
+        # ================= GENUINE FEEDBACK CHECK =================
+        # Setiap pesan tetap disimpan (supaya previous_feedbacks/history chat
+        # jalan terus), tapi hanya ditandai is_genuine_feedback=True kalau:
+        #   a. LLM benar-benar mendeteksi ini feedback (is_feedback == True), DAN
+        #   b. kalau pesan terkait event (event_id ada), pengirimnya sudah
+        #      attendance-verified untuk event itu — pakai helper yang sama
+        #      dengan Step 7 Anonymous Feedback System
+        #      (Feedback.email_has_verified_attendance), dicek dari email
+        #      yang tersimpan di session (session key sama yang dipakai
+        #      submit_attendance() / _get_participation_context()).
+        # Asumsi: tanpa event terkait, syarat attendance otomatis terpenuhi
+        # (feedback umum soal budaya/aplikasi tidak mensyaratkan kehadiran).
+        participant_email = (request.session.get('participant_email') or '').strip().lower()
+
+        attendance_ok = True
+        if event:
+            attendance_ok = Feedback.email_has_verified_attendance(participant_email, event)
+
+        is_genuine_feedback = bool(is_feedback and attendance_ok)
+
         # ================= SAVE DB =================
 
         fb = Feedback.objects.create(
             session_id=session_id,
             event=event,
+            participant_email=participant_email or None,
             message=message,
             ai_response=reply,
-            sentiment=sentiment,
+            sentiment=sentiment if is_genuine_feedback else None,
             rating=None,
             source_platform='web',
+            is_genuine_feedback=is_genuine_feedback,
         )
 
         # ================= CEK RATING =================
@@ -867,7 +904,8 @@ def save_feedback(request):
         # ================= UPDATE AVG EVENT =================
         avg_rating = Feedback.objects.filter(
             event=fb.event,
-            rating__isnull=False
+            rating__isnull=False,
+            is_genuine_feedback=True,
         ).aggregate(avg=Avg('rating'))['avg']
 
         fb.event.rating = round(avg_rating, 1)
@@ -911,6 +949,7 @@ def culture_performance(request):
 
     sentiment_breakdown = (
         Feedback.objects
+        .filter(is_genuine_feedback=True)
         .values('sentiment')
         .annotate(count=Count('feedback_id'))
         .order_by('-count')
@@ -923,7 +962,7 @@ def culture_performance(request):
         'events_per_core_value': events_per_core_value,
         'sentiment_breakdown': sentiment_breakdown,
         'avg_event_rating': round(avg_event_rating, 1) if avg_event_rating else None,
-        'total_feedback': Feedback.objects.count(),
+        'total_feedback': Feedback.objects.filter(is_genuine_feedback=True).count(),
     }
     return render(request, 'cms/culture_performance.html', context)
 
@@ -1401,16 +1440,16 @@ def admin_home(request):
     total_content = Event.objects.count() + News.objects.count() + Attribute.objects.count()
     total_views = VisitorLog.objects.count()
     active_content = Event.objects.filter(status__in=[Event.STATUS_PUBLISHED, Event.STATUS_ONGOING]).count()
-    total_feedback = Feedback.objects.count()
+    total_feedback = Feedback.objects.filter(is_genuine_feedback=True).count()
 
-    feedback_messages = [item.message for item in Feedback.objects.all()]
+    feedback_messages = [item.message for item in Feedback.objects.filter(is_genuine_feedback=True)]
     common_words = sentiment_analyzer.extract_common_words(feedback_messages, limit=6)
     common_word_list = [{'word': word, 'count': count} for word, count in common_words]
 
     event_ranking = []
     event_feedback_stats = (
         Feedback.objects
-        .filter(event__isnull=False)
+        .filter(event__isnull=False, is_genuine_feedback=True)
         .values('event__event_id', 'event__event_name')
         .annotate(
             total=Count('feedback_id'),
@@ -1436,9 +1475,9 @@ def admin_home(request):
     event_ranking.sort(key=lambda row: (row['score'], row['total']), reverse=True)
     event_ranking = event_ranking[:5]
 
-    total_positive = Feedback.objects.filter(sentiment='positive').count()
-    total_neutral = Feedback.objects.filter(sentiment='neutral').count()
-    total_negative = Feedback.objects.filter(sentiment='negative').count()
+    total_positive = Feedback.objects.filter(sentiment='positive', is_genuine_feedback=True).count()
+    total_neutral = Feedback.objects.filter(sentiment='neutral', is_genuine_feedback=True).count()
+    total_negative = Feedback.objects.filter(sentiment='negative', is_genuine_feedback=True).count()
 
     if total_feedback:
         positive_percent = round(total_positive / total_feedback * 100)
@@ -1448,7 +1487,7 @@ def admin_home(request):
         positive_percent = neutral_percent = negative_percent = 0
 
     recent_admin_activities = list(AdminActivity.objects.all().order_by('-created_at'))
-    recent_feedbacks = list(Feedback.objects.order_by('-created_at')[:10])
+    recent_feedbacks = list(Feedback.objects.filter(is_genuine_feedback=True).order_by('-created_at')[:10])
 
     def format_activity_time(dt):
         if timezone.is_naive(dt):
@@ -1484,7 +1523,7 @@ def admin_home(request):
             preview = preview[:90].rsplit(' ', 1)[0] + '...'
         recent_feedbacks_data.append({
             'comment': preview,
-            'sentiment': fb.sentiment.capitalize(),
+            'sentiment': fb.sentiment.capitalize() if fb.sentiment else 'Neutral',
             'rating': fb.rating if fb.rating is not None else 'N/A',
             'platform': fb.source_platform.capitalize(),
             'when': format_activity_time(fb.created_at),
@@ -1907,7 +1946,7 @@ def feedback_admin(request):
     event_qs = Event.objects.filter(status__in=['completed', 'archived']).order_by('event_name')
     event_options = list(event_qs.values('event_id', 'event_name'))
 
-    base_qs = Feedback.objects.order_by('-created_at')
+    base_qs = Feedback.objects.filter(is_genuine_feedback=True).order_by('-created_at')
 
     # Filter by selected event(s) using FK. 'General' means event is null.
     if selected_events and 'all' not in selected_events:
