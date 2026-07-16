@@ -16,7 +16,6 @@ urlpatterns = [
     path('event/<int:id>/register/', views.register_event, name='register_event'),
     path('event/<int:id>/check-status/', views.check_participation_status, name='check_participation_status'),
     path('success/', views.success_page, name='success_page'),
-    path('submit_contact_us/', views.submit_contact_us, name='submit_contact_us'),
     path('news_redirect/<int:id>/', views.redirect_news, name='redirect_news'),
     path('attribute_redirect/<int:id>/', views.redirect_attribute, name='redirect_attribute'),
 
@@ -47,7 +46,5 @@ urlpatterns = [
     path('admin-attendance/', views.admin_attendance_list, name='admin_attendance'),
     path('admin-attendance/verify/<int:attendance_id>/', views.admin_verify_attendance, name='admin_verify_attendance'),
     path('admin-attendance/reject/<int:attendance_id>/', views.admin_reject_attendance, name='admin_reject_attendance'),
-    path('admin-contact/', views.admin_contact_tracking, name='admin_contact_tracking'),
-    path('admin-contact/delete/<int:contact_id>/', views.admin_delete_contact, name='admin_delete_contact'),
-    path('admin-contact/status/<int:contact_id>/', views.admin_update_contact_status, name='admin_update_contact_status'),
+
 ]

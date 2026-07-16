@@ -7,6 +7,8 @@
     <title>Attendance — Admin</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -21,12 +23,14 @@
             --slate-text: #475569;
             --slate-muted: #64748B;
             --card-bg: #FFFFFF;
-            --radius-lg: 16px;
+            /* sizing tokens synced with admin.html so page dimensions stay stable across the panel */
+            --radius-lg: 28px;
+            --radius-card: 20px;
             --radius-md: 10px;
             --radius-pill: 999px;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02);
-            --shadow-md: 0 4px 20px -2px rgba(1, 51, 32, 0.05), 0 2px 12px -1px rgba(0, 0, 0, 0.03);
-            --shadow-lg: 0 20px 25px -5px rgba(1, 51, 32, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 8px 24px rgba(15,61,46,0.06);
+            --shadow-lg: 0 14px 40px rgba(15,61,46,0.10);
         }
 
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
@@ -38,48 +42,43 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Navbar Layout */
-        .navbar {
-            background: var(--forest);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 40px; position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 4px 30px rgba(1, 31, 23, 0.15);
-        }
-        .logo { color: #fff; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--forest); font-size: 13px; font-weight: 800; }
-        .nav-links { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,0.05); }
-        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; padding: 8px 18px; font-size: 13px; font-weight: 500; border-radius: var(--radius-pill); transition: all 0.2s ease; white-space: nowrap; }
+        /* ============ NAVBAR (synced with Explore Admin) ============ */
+        .navbar { background: #0F3D2E; display: flex; justify-content: space-between; align-items: center; padding: 14px 40px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 24px rgba(11,31,23,0.18); }
+        .logo { font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif; color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: #B6F500; display: inline-flex; align-items: center; justify-content: center; color: #0B1F17; font-size: 13px; font-weight: 800; }
+        .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
+        .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
         .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
-        .nav-links a.active { color: var(--forest); background: var(--lime); font-weight: 600; }
-        .logout-btn { background: rgba(239,68,68,0.15) !important; color: #FFA3A3 !important; font-weight: 600 !important; margin-left: 10px; }
-        .logout-btn:hover { background: #ef4444 !important; color: #fff !important; }
+        .nav-links a.active { color: #0B1F17; background: #B6F500; }
+        .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
+        .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
 
         @media (max-width: 900px) {
-            .navbar { flex-direction: column; gap: 14px; padding: 16px 20px; align-items: stretch; }
+            .navbar { flex-direction: column; gap: 12px; padding: 16px 20px; align-items: stretch; }
             .logo { justify-content: center; }
             .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
-            .nav-links a { font-size: 12px; padding: 6px 12px; }
+            .nav-links a { font-size: 12.5px; padding: 7px 12px; }
         }
 
-        .container { width: 92%; max-width: 1400px; margin: 32px auto; padding-bottom: 60px; }
+        .container { width: min(1320px, 92%); margin: 32px auto; padding-bottom: 40px; }
 
-        /* Header / Hero Banner */
+        /* Header / Hero Banner — sized to match admin.html's hero */
         .hero {
             background: linear-gradient(135deg, var(--forest), var(--forest-light));
-            padding: 36px 40px;
+            padding: 34px 38px;
             border-radius: var(--radius-lg);
-            margin-bottom: 30px;
+            margin-bottom: 26px;
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
         }
         .hero::before {
             content: ""; position: absolute; top: -40px; right: -40px;
             width: 160px; height: 160px; background: var(--lime); opacity: 0.12; border-radius: 50%;
         }
-        .hero h1 { font-size: 26px; font-weight: 600; color: white; letter-spacing: -0.5px; }
-        .hero p { font-size: 14px; margin-top: 6px; color: rgba(255, 255, 255, 0.8); font-weight: 300; }
+        .hero h1 { font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif; font-size: 25px; font-weight: 800; color: white; letter-spacing: -0.4px; }
+        .hero p { font-size: 13.5px; margin-top: 6px; color: rgba(255, 255, 255, 0.72); font-weight: 300; max-width: 480px; }
 
         /* Section Headings */
         .section-title {
@@ -89,15 +88,15 @@
         .section-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--forest-light); }
         .section-title:first-of-type { margin-top: 0; }
 
-        /* SaaS Style Bento Grid Summary */
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+        /* SaaS Style Bento Grid Summary — sized to match admin.html's stat-tile cards */
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 20px; }
         .summary-card {
-            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-card); padding: 22px; box-shadow: var(--shadow-md);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .summary-card .num { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-        .summary-card .label { font-size: 12.5px; color: var(--slate-muted); margin-top: 4px; font-weight: 500; }
+        .summary-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(166,242,74,0.4); }
+        .summary-card .num { font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif; font-size: 27px; font-weight: 800; color: var(--ink); line-height: 1.2; letter-spacing: -0.4px; }
+        .summary-card .label { font-size: 12px; color: var(--slate-muted); margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
         
         .summary-card.accent-blue .num { color: var(--forest-light); }
         .summary-card.accent-green .num { color: #16a34a; }
@@ -118,12 +117,14 @@
         .filter-bar a:hover { border-color: var(--slate-muted); color: var(--ink); }
         .filter-bar a.active { background: var(--forest); color: white; border-color: var(--forest); font-weight: 600; }
 
-        /* Dynamic Chart Wrapper */
+        /* Dynamic Chart Wrapper — sized to match admin.html's .panel */
         .chart-card {
-            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-lg);
-            padding: 24px; margin-bottom: 30px; box-shadow: var(--shadow-lg);
+            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-card);
+            padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-md);
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
         }
-        .chart-card .canvas-wrap { position: relative; height: 300px; width: 100%; }
+        .chart-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .chart-card .canvas-wrap { position: relative; height: 260px; width: 100%; }
 
         /* Growth Metrics Badge */
         .growth-pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; }
@@ -131,10 +132,10 @@
         .growth-pill.down { background: #fee2e2; color: #b91c1c; }
         .growth-pill.flat { background: #f1f5f9; color: var(--slate-text); }
 
-        /* Modern Table / Row Components */
+        /* Modern Table / Row Components — sized to match admin.html's content-list/panel */
         .att-table {
-            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-lg);
-            overflow: hidden; box-shadow: var(--shadow-lg);
+            background: var(--card-bg); border: 1px solid var(--slate-border); border-radius: var(--radius-card);
+            overflow: hidden; box-shadow: var(--shadow-md);
         }
         .att-row {
             display: grid; grid-template-columns: 1.5fr 1.2fr 0.8fr 1.3fr 1.2fr; gap: 16px;
@@ -197,8 +198,7 @@
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
             <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
-            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
-            <a href="{% url 'admin_logout' %}" class="nav-links a logout-btn">Logout</a>
+            <a href="{% url 'admin_logout' %}" class="nav-logout">Logout</a>
         </div>
     </div>
 

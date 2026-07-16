@@ -7,16 +7,28 @@
     <title>Feedback</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         /* ===== CSS VARIABLES ===== */
         :root {
-            --forest: #013320;
-            --lime: #A6F24A;
-            --ink: #1e293b;
+            --ink: #0B1F17;
+            --forest: #0F3D2E;
+            --forest-2: #14543D;
+            --lime: #B6F500;
+            --lime-soft: #E9FFB0;
+            --bg: #F6F8F6;
+            --card: #FFFFFF;
+            --text-muted: #6B7A73;
+            --border: rgba(15,61,46,0.08);
+            --radius-lg: 28px;
+            --radius-md: 20px;
+            --radius-sm: 14px;
+            --shadow-soft: 0 8px 24px rgba(15,61,46,0.06);
+            --shadow-card: 0 14px 40px rgba(15,61,46,0.10);
         }
-
         * {
             margin: 0;
             padding: 0;
@@ -30,22 +42,21 @@
             min-height: 100vh;
         }
 
-        .nav-links a.active {
-            border-bottom: 2px solid white;
-        }
-
         .container {
-            width: 90%;
-            margin: 25px auto;
+            width: min(1320px, 92%);
+            margin: 32px auto;
+            padding-bottom: 40px;
         }
 
+        /* Hero — sized to match admin.html's hero */
         .hero {
             background: linear-gradient(135deg, #013320, #016632 130%);
-            padding: 30px;
-            border-radius: 18px;
-            margin-bottom: 25px;
+            padding: 34px 38px;
+            border-radius: 28px;
+            margin-bottom: 26px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 14px 40px rgba(15,61,46,0.10);
         }
 
         .hero::before {
@@ -57,13 +68,17 @@
         .hero h1, .hero p { position: relative; color: #fff; }
 
         .hero h1 {
-            font-size: 24px;
+            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
         }
 
         .hero p {
-            font-size: 13px;
-            margin-top: 5px;
+            font-size: 13.5px;
+            margin-top: 6px;
             opacity: 0.9;
+            max-width: 480px;
         }
 
         /* ===== FILTER SECTION ===== */
@@ -95,12 +110,12 @@
             box-shadow: 0 4px 12px rgba(1, 102, 50, 0.1);
         }
 
-        /* ===== SENTIMENT CARDS ===== */
+        /* ===== SENTIMENT CARDS — sized to match admin.html's stat-tile ===== */
         .sentiment {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 18px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .card {
@@ -108,26 +123,31 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 22px;
-            border-radius: 16px;
+            border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 8px 32px rgba(1, 51, 32, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 24px rgba(15,61,46,0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
         .card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(1, 51, 32, 0.12);
+            box-shadow: 0 14px 40px rgba(15,61,46,0.10);
         }
 
         .card h4 {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
 
         .card h2 {
-            margin-top: 8px;
-            font-size: 24px;
+            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+            margin-top: 6px;
+            font-size: 27px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
         }
 
         .percent {
@@ -163,18 +183,18 @@
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 22px;
+            border-radius: 20px;
+            padding: 24px;
             border: 1px solid rgba(255, 255, 255, 0.85);
-            box-shadow: 0 8px 32px rgba(1, 51, 32, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 24px rgba(15,61,46,0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
         .chart-card:hover,
         .insights-card:hover,
         .box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(1, 51, 32, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 40px rgba(15,61,46,0.10);
         }
 
         .chart-card,
@@ -415,19 +435,14 @@
             font-weight: 600;
         }
 
-        /* NAVBAR STYLES */
-        .navbar {
-            background: var(--forest);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 40px; position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 4px 24px rgba(11,31,23,0.18);
-        }
-        .logo { color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
-        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: var(--lime); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); font-size: 13px; font-weight: 800; }
+        /* ============ NAVBAR (synced with Explore Admin) ============ */
+        .navbar { background: #0F3D2E; display: flex; justify-content: space-between; align-items: center; padding: 14px 40px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 24px rgba(11,31,23,0.18); }
+        .logo { font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif; color: #fff; font-weight: 800; font-size: 16.5px; letter-spacing: -0.2px; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+        .logo-mark { width: 26px; height: 26px; border-radius: 8px; background: #B6F500; display: inline-flex; align-items: center; justify-content: center; color: #0B1F17; font-size: 13px; font-weight: 800; }
         .nav-links { display: flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.07); padding: 5px; border-radius: 999px; }
         .nav-links a { color: rgba(255,255,255,0.72); text-decoration: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
         .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
-        .nav-links a.active { color: var(--ink); background: var(--lime); }
+        .nav-links a.active { color: #0B1F17; background: #B6F500; }
         .nav-logout { margin-left: 10px !important; background: rgba(239,68,68,0.16) !important; color: #FFD3D3 !important; }
         .nav-logout:hover { background: #ef4444 !important; color: #fff !important; }
 
@@ -456,8 +471,7 @@
             <a href="/admin-explore/" class="{% if request.path == '/admin-explore/' %}active{% endif %}">Explore</a>
             <a href="/admin-attendance/" class="{% if request.path == '/admin-attendance/' %}active{% endif %}">Attendance</a>
             <a href="/admin-feedback/" class="{% if request.path == '/admin-feedback/' %}active{% endif %}">Feedback</a>
-            <a href="/admin-contact/" class="{% if request.path == '/admin-contact/' %}active{% endif %}">Contact Us</a>
-            <a href="{% url 'admin_logout' %}" class="nav-logout" style="padding:5px 14px;border-radius:20px;margin-left:15px;font-size:13px;font-weight:600;text-decoration:none;">Logout</a>
+            <a href="{% url 'admin_logout' %}" class="nav-logout">Logout</a>
         </div>
     </div>
 

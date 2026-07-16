@@ -45,7 +45,9 @@ class Event(models.Model):
     description = models.TextField(null=True, blank=True)
     location    = models.CharField(max_length=255, null=True, blank=True)
     event_date  = models.DateField(null=True, blank=True)
+    # event_time is the start time; end_time completes the one-day event window.
     event_time  = models.TimeField(null=True, blank=True)
+    end_time    = models.TimeField(null=True, blank=True)
     rating      = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
     image_url   = models.TextField(null=True, blank=True)
     created_by  = models.IntegerField(null=True, blank=True)
@@ -117,6 +119,64 @@ class Event(models.Model):
             self.STATUS_COMPLETED: 'badge-info',
             self.STATUS_ARCHIVED:  'badge-dark',
         }.get(self.status, 'badge-secondary')
+
+    # ════════════════════════════════════════════════════════════════
+    # LIFECYCLE GATE — Draft ⇄ Published completeness check
+    # ════════════════════════════════════════════════════════════════
+    # Business rule: an event can only be Published once every required
+    # field on the Event Form is filled in — including Registration
+    # Deadline, Attendance Open Time, and Attendance Close Time. Capacity
+    # and Person in Charge (PIC) are explicitly EXCLUDED — they stay
+    # optional forever, an event can be published with either (or both)
+    # left blank.
+    #
+    # A new/edited event with any of these fields still empty is always
+    # saved as Draft. If an admin explicitly asks to Publish while
+    # something required is missing, that's a hard validation error —
+    # views.py rejects the save entirely and tells the admin exactly what
+    # to fill in (see admin_add_event / admin_edit_event /
+    # admin_change_event_status), rather than silently saving as Draft.
+    #
+    # This list is the single source of truth for "required" — forms.py
+    # and views.py both call get_missing_required_fields() /
+    # is_ready_to_publish below instead of hard-coding field names, so the
+    # rule can't drift out of sync between the three admin entry points.
+    REQUIRED_FOR_PUBLISH_FIELDS = [
+        'event_name', 'description', 'location',
+        'event_date', 'event_time', 'end_time', 'image_url',
+        'registration_deadline', 'attendance_open_time', 'attendance_close_time',
+    ]
+
+    REQUIRED_FIELD_LABELS = {
+        'event_name':  'Judul Event',
+        'description': 'Deskripsi Event',
+        'location':    'Lokasi',
+        'event_date':  'Tanggal Event',
+        'event_time':  'Waktu Mulai',
+        'end_time':    'Waktu Selesai',
+        'image_url':   'Gambar Event',
+        'registration_deadline': 'Registration Deadline',
+        'attendance_open_time':  'Attendance Open Time',
+        'attendance_close_time': 'Attendance Close Time',
+    }
+
+    def get_missing_required_fields(self):
+        """
+        Return the human-readable labels of required fields that are
+        still empty. Capacity & PIC are intentionally never checked here.
+        An empty list means the event is complete enough to Publish.
+        """
+        missing = []
+        for field_name in self.REQUIRED_FOR_PUBLISH_FIELDS:
+            value = getattr(self, field_name, None)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                missing.append(self.REQUIRED_FIELD_LABELS.get(field_name, field_name))
+        return missing
+
+    @property
+    def is_ready_to_publish(self):
+        """True once every required field (Capacity/PIC excluded) is filled in."""
+        return not self.get_missing_required_fields()
 
 
 class EventCoreValue(models.Model):
@@ -340,6 +400,15 @@ class Feedback(models.Model):
     # field ini hanya penanda mana yang boleh dihitung sebagai statistik
     # feedback/sentiment asli.
     is_genuine_feedback = models.BooleanField(default=False)
+    # Hasil deteksi LLM (IS_FEEDBACK:true/false dari Groq) disimpan APA
+    # ADANYA di sini, terlepas dari status attendance pengirim saat itu.
+    # Berbeda dengan `is_genuine_feedback` yang juga mensyaratkan
+    # attendance sudah verified, kolom ini murni "apakah LLM mendeteksi
+    # pesan ini sebagai feedback". Dipakai supaya saat attendance
+    # diverifikasi belakangan (lihat admin_verify_attendance()), kita
+    # bisa recompute is_genuine_feedback dengan query biasa tanpa perlu
+    # manggil ulang LLM/re-classify pesan yang bersangkutan.
+    is_feedback_detected = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'feedback'
@@ -458,4 +527,3 @@ class ContactUs(models.Model):
     class Meta:
         managed = False
         db_table = 'contact_us'
-        

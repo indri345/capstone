@@ -45,14 +45,27 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
         .navbar a {
-            text-decoration: none !important;
-            color: rgba(255,255,255,0.65);
-            transition: all 0.25s ease;
-            font-weight: 500;
-            font-size: 14.5px;
-            letter-spacing: 0.1px;
-        }
+    text-decoration: none !important;
+    color: rgba(255,255,255,0.65);
+    transition: all 0.25s ease;
+    font-weight: 500;
+    font-size: 14.5px;
+}
         .navbar a:hover { color: var(--lime) !important; }
+        
+        .navbar-toggler {
+    border: 0;
+    padding: 0;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-toggler-icon {
+    filter: brightness(0) invert(1);
+}
+
         .active-link {
             font-weight: 600 !important;
             color: #fff !important;
@@ -89,7 +102,18 @@
             display: inline-flex; align-items: center; gap: 10px;
             font-weight: 700; font-size: 17px;
         }
-        .brand-logo { width: 30px; height: 30px; border-radius: 8px; background: var(--lime); padding: 4px; }
+        .brand-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--lime);
+    padding: 4px;
+    transition: transform 0.3s;
+}
+
+.brand-link:hover .brand-logo {
+    transform: rotate(8deg) scale(1.05);
+}
 
         @media (max-width: 767.98px) {
             .navbar-collapse { background-color: #0B1F17; padding: 18px 14px; border-radius: 16px; margin-top: 12px; }
@@ -231,7 +255,7 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-md navbar-dark">
     <div class="container-fluid px-4">
-        <a class="navbar-brand brand-link" href="{% url 'home' %}">
+        <a href="{% url 'home' %}" class="navbar-brand brand-link">
             <img class="brand-logo" src="{% static 'cms/pegadaian_logo.png' %}" alt="Logo">
             <span>Digital Culture</span>
         </a>
@@ -240,7 +264,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="d-flex align-items-center ms-auto gap-4 nav-links-container">
+            <div class="d-flex align-items-center ms-auto gap-3 nav-links-container">
                 <a href="/" class="{% if request.path == '/' %}active-link{% endif %}">Home</a>
                 <a href="/explore/" class="{% if request.path == '/explore/' %}active-link{% endif %}">Explore</a>
                 <a href="/culture_performance/" class="{% if request.path == '/culture_performance/' %}active-link{% endif %}">Culture</a>

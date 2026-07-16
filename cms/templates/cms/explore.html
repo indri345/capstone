@@ -193,6 +193,7 @@
             backdrop-filter: blur(6px); z-index: 2; letter-spacing: 0.2px;
         }
         .badge-upcoming { background: rgba(182,245,0,0.95); color: var(--ink); }
+        .badge-ongoing { background: rgba(31, 111, 235, 0.95); color: white; }
         .badge-past { background: rgba(11,31,23,0.85); color: white; }
 
         .card-body { padding: 16px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -621,6 +622,7 @@
             <div class="col-md-5 d-flex gap-2 justify-content-md-end flex-wrap">
                 <button type="button" class="btn btn-sm filter-chip active" data-filter="all">All</button>
                 <button type="button" class="btn btn-sm filter-chip" data-filter="upcoming">Upcoming</button>
+                <button type="button" class="btn btn-sm filter-chip" data-filter="ongoing">Ongoing</button>
                 <button type="button" class="btn btn-sm filter-chip" data-filter="past">Past</button>
                 <button type="button" class="btn btn-sm" id="exploreClearBtn">Clear</button>
             </div>
@@ -656,10 +658,14 @@
 
             <div class="card-custom"
                  data-event-id="{{ event.event_id }}"
+                 data-status="{{ event.status }}"
+                 data-registration-open="{{ event.is_registration_open|yesno:'1,0' }}"
                  data-date="{{ event.event_date|date:'Y-m-d' }}"
+                 data-start-time="{{ event.event_time|time:'H:i' }}"
+                 data-end-time="{{ event.end_time|time:'H:i' }}"
                  data-title="{{ event.event_name }}"
                  data-location="{{ event.location|default:'-' }}"
-                 data-time="{{ event.event_time|default:'-' }}"
+                 data-time="{{ event.event_time|time:'H:i' }}{% if event.end_time %} - {{ event.end_time|time:'H:i' }}{% endif %}"
                  data-rating="{{ event.rating|default:'' }}"
                  data-description="{{ event.description|default:''|escape }}"
                  data-cores="{% for core in event.core_values.all %}{{ core.core_value_name }}{% if not forloop.last %},{% endif %}{% endfor %}"
@@ -679,11 +685,7 @@
 
                     <p class="text-muted">{{ event.location }}</p>
                     <p class="text-muted">{{ event.event_date }}</p>
-                    <p class="text-muted">{{ event.event_time }}</p>
-
-                    {% if event.status == 'ongoing' %}
-                        <p class="text-success small" style="margin-top:6px; font-weight:700;">On Progress</p>
-                    {% endif %}
+                    <p class="text-muted">{{ event.event_time }}{% if event.end_time %} - {{ event.end_time }}{% endif %}</p>
 
                     <!-- RATING -->
                     {% if event.rating %}
@@ -1204,12 +1206,19 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ─── HELPERS ─────────────────────────────────── */
     function normalize(s) { return (s || "").toLowerCase().trim(); }
 
-    function isPast(dateStr) {
-        if (!dateStr) return null;
-        const [y, m, d] = dateStr.split("-").map(Number);
-        const eventDate = new Date(y, m - 1, d);
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        return eventDate < today;
+    function getEventPhase(card) {
+        // Source of truth is the backend lifecycle status (kept fresh by
+        // auto_update_event_statuses() on every explore() request), not a
+        // client-side recompute from date/time. Users only ever see three
+        // phases: upcoming, ongoing, past — draft/archived events never
+        // reach this page in the first place.
+        const status = (card.getAttribute("data-status") || "").toLowerCase();
+        switch (status) {
+            case "published": return "upcoming";
+            case "ongoing":   return "ongoing";
+            case "completed": return "past";
+            default:          return "upcoming";
+        }
     }
 
     function formatDisplayDate(dateStr) {
@@ -1222,17 +1231,18 @@ document.addEventListener("DOMContentLoaded", function () {
     /* ─── BADGE + FEEDBACK BUTTON ─────────────────── */
     function initEventCards() {
         document.querySelectorAll("#events .card-custom[data-date]").forEach(card => {
-            const past = isPast(card.getAttribute("data-date"));
+            const phase = getEventPhase(card);
 
-            if (!card.querySelector(".card-badge")) {
-                const badge = document.createElement("div");
-                badge.className = "card-badge " + (past ? "badge-past" : "badge-upcoming");
-                badge.textContent = past ? "Past" : "Upcoming";
+            let badge = card.querySelector(".card-badge");
+            if (!badge) {
+                badge = document.createElement("div");
                 card.prepend(badge);
             }
+            badge.className = "card-badge " + (phase === "past" ? "badge-past" : phase === "ongoing" ? "badge-ongoing" : "badge-upcoming");
+            badge.textContent = phase === "ongoing" ? "Ongoing" : phase === "past" ? "Past" : "Upcoming";
 
             const fb = card.querySelector(".feedback-btn");
-            if (fb) fb.style.display = past ? "inline-block" : "none";
+            if (fb) fb.style.display = phase === "past" ? "inline-block" : "none";
         });
     }
 
@@ -1263,8 +1273,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             let matchesChip = true;
             if (tabId === "events" && currentFilter !== "all") {
-                const past = isPast(card.getAttribute("data-date"));
-                matchesChip = currentFilter === "past" ? past === true : past === false;
+                const phase = getEventPhase(card);
+                matchesChip = phase === currentFilter;
             }
 
             const show = matchesQuery && matchesChip;
@@ -1315,6 +1325,11 @@ document.addEventListener("DOMContentLoaded", function () {
     initEventCards();
     applyFilters();
     convertGDriveImages();
+    // Keep cards accurate if an event changes phase while this page remains open.
+    window.setInterval(() => {
+        initEventCards();
+        applyFilters();
+    }, 30000);
 
     /* ─── OPEN FEEDBACK WIDGET FOR SPECIFIC EVENT ─── */
     window.openFeedbackForEvent = function(eventId) {
@@ -1398,14 +1413,19 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        if (isPast(data.dateStr)) {
+        const phase = getEventPhase(cardEl);
+        const registrationOpen = cardEl.getAttribute("data-registration-open") === "1";
+
+        if (phase === "past") {
             detailRatingBox.style.display = "";
             detailRating.textContent = data.rating ? data.rating : "Belum ada rating";
-            detailDaftarBtn.style.display = "none"; // event sudah lewat, tidak bisa daftar
         } else {
             detailRatingBox.style.display = "none";
-            detailDaftarBtn.style.display = "";
         }
+
+        // Daftar button follows the server-side registration flag (status +
+        // registration deadline), not just "is this event in the past".
+        detailDaftarBtn.style.display = registrationOpen ? "" : "none";
 
         lastFocusedBeforeDetail = document.activeElement;
         detailOverlay.classList.add("open");

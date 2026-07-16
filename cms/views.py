@@ -8,7 +8,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from django.db.models import Sum, Avg, Q, Count, Max
+from django.db.models import Sum, Avg, Q, Count, Max, Exists, OuterRef
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.contrib import messages
@@ -41,7 +41,7 @@ from .models import (
 )
 from .recommendation import (get_recommended_events, get_latest_news)
 from .sentiment import sentiment_analyzer
-from .forms import EventRegistrationForm
+from .forms import EventRegistrationForm, get_missing_required_fields_for_publish
 
 
 def _parse_admin_datetime(raw_value, field_label, errors):
@@ -90,29 +90,66 @@ def normalize_email_for_compare(email):
     return e
 
 
+def _aware_dt(event_date, t):
+    """Combine a date + time into a tz-aware datetime in the current timezone."""
+    dt = datetime.combine(event_date, t)
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+
 def auto_update_event_statuses():
-    """Auto-transition events from `published` to `ongoing` when start time passed.
+    """Auto-transition event lifecycle status based on the current time.
 
     This is a lightweight, idempotent update intended to run at view entry
-    so the public listing reflects events that have started.
+    (e.g. explore()) so the public listing always reflects reality, without
+    any admin action required:
+
+      published -> ongoing    once event_date/event_time has started
+      ongoing   -> completed  once event_date/end_time (or event_time, or
+                               end-of-day as a last resort) has passed
+
+    `draft` and `archived` are never touched here — those are exclusively
+    admin-controlled via the CRUD screens.
     """
     now = timezone.now()
-    qs = Event.objects.filter(status=Event.STATUS_PUBLISHED, event_date__isnull=False)
-    updated = []
-    for ev in qs:
+
+    # ── published -> ongoing ──────────────────────────────────────
+    to_ongoing = Event.objects.filter(status=Event.STATUS_PUBLISHED, event_date__isnull=False)
+    updated_ongoing = []
+    for ev in to_ongoing:
         try:
-            ev_time = ev.event_time if ev.event_time is not None else time(0, 0)
-            ev_dt = datetime.combine(ev.event_date, ev_time)
-            if timezone.is_naive(ev_dt):
-                ev_dt = timezone.make_aware(ev_dt, timezone.get_current_timezone())
-            if now >= ev_dt:
+            start_time = ev.event_time if ev.event_time is not None else time(0, 0)
+            start_dt = _aware_dt(ev.event_date, start_time)
+            if now >= start_dt:
                 ev.status = Event.STATUS_ONGOING
                 ev.save(update_fields=['status'])
-                updated.append(ev.event_id)
+                updated_ongoing.append(ev.event_id)
         except Exception:
             continue
-    if updated:
-        logger.info('Auto-updated events to ongoing: %s', updated)
+    if updated_ongoing:
+        logger.info('Auto-updated events to ongoing: %s', updated_ongoing)
+
+    # ── ongoing -> completed ──────────────────────────────────────
+    to_completed = Event.objects.filter(status=Event.STATUS_ONGOING, event_date__isnull=False)
+    updated_completed = []
+    for ev in to_completed:
+        try:
+            if ev.end_time is not None:
+                end_time = ev.end_time
+            elif ev.event_time is not None:
+                end_time = ev.event_time
+            else:
+                end_time = time(23, 59, 59)
+            end_dt = _aware_dt(ev.event_date, end_time)
+            if now >= end_dt:
+                ev.status = Event.STATUS_COMPLETED
+                ev.save(update_fields=['status'])
+                updated_completed.append(ev.event_id)
+        except Exception:
+            continue
+    if updated_completed:
+        logger.info('Auto-updated events to completed: %s', updated_completed)
 
 
 # =====================
@@ -373,6 +410,10 @@ def parse_edition_date(edition):
 
 
 def explore(request):
+    # Keep event lifecycle status fresh (published→ongoing→completed) before
+    # querying, so the listing below never shows a stale status.
+    auto_update_event_statuses()
+
     # See home() — real visit_duration/engagement_score are recorded via
     # track_activity() from the frontend, not fabricated here.
     VisitorLog.objects.create(page_visited='explore')
@@ -766,6 +807,7 @@ def chat_with_ai(request):
             rating=None,
             source_platform='web',
             is_genuine_feedback=is_genuine_feedback,
+            is_feedback_detected=is_feedback,
         )
 
         # ================= CEK RATING =================
@@ -1440,16 +1482,36 @@ def admin_home(request):
     total_content = Event.objects.count() + News.objects.count() + Attribute.objects.count()
     total_views = VisitorLog.objects.count()
     active_content = Event.objects.filter(status__in=[Event.STATUS_PUBLISHED, Event.STATUS_ONGOING]).count()
-    total_feedback = Feedback.objects.filter(is_genuine_feedback=True).count()
 
-    feedback_messages = [item.message for item in Feedback.objects.filter(is_genuine_feedback=True)]
+    # Only feedback from participants who actually attended the event should
+    # count toward the dashboard's totals / pie chart / recent list — same
+    # rule already used by feedback_admin(). "Attended" = they have an
+    # Attendance record tied to their event registration for that same event
+    # (matched by event + email). Feedback with no event ('General') can
+    # never satisfy this, since attendance is always tied to a specific event.
+    # Using this single queryset everywhere below (instead of each stat
+    # re-filtering Feedback on its own with just is_genuine_feedback=True) is
+    # what keeps the stat cards, the pie chart, and Recent Feedback in sync.
+    dashboard_attended_qs = Attendance.objects.filter(
+        event_registration__event_id=OuterRef('event_id'),
+        event_registration__email__iexact=OuterRef('participant_email'),
+    )
+    genuine_attended_feedback_qs = Feedback.objects.filter(
+        is_genuine_feedback=True,
+    ).annotate(
+        has_attended=Exists(dashboard_attended_qs)
+    ).filter(has_attended=True)
+
+    total_feedback = genuine_attended_feedback_qs.count()
+
+    feedback_messages = [item.message for item in genuine_attended_feedback_qs]
     common_words = sentiment_analyzer.extract_common_words(feedback_messages, limit=6)
     common_word_list = [{'word': word, 'count': count} for word, count in common_words]
 
     event_ranking = []
     event_feedback_stats = (
-        Feedback.objects
-        .filter(event__isnull=False, is_genuine_feedback=True)
+        genuine_attended_feedback_qs
+        .filter(event__isnull=False)
         .values('event__event_id', 'event__event_name')
         .annotate(
             total=Count('feedback_id'),
@@ -1475,9 +1537,9 @@ def admin_home(request):
     event_ranking.sort(key=lambda row: (row['score'], row['total']), reverse=True)
     event_ranking = event_ranking[:5]
 
-    total_positive = Feedback.objects.filter(sentiment='positive', is_genuine_feedback=True).count()
-    total_neutral = Feedback.objects.filter(sentiment='neutral', is_genuine_feedback=True).count()
-    total_negative = Feedback.objects.filter(sentiment='negative', is_genuine_feedback=True).count()
+    total_positive = genuine_attended_feedback_qs.filter(sentiment='positive').count()
+    total_neutral = genuine_attended_feedback_qs.filter(sentiment='neutral').count()
+    total_negative = genuine_attended_feedback_qs.filter(sentiment='negative').count()
 
     if total_feedback:
         positive_percent = round(total_positive / total_feedback * 100)
@@ -1487,7 +1549,7 @@ def admin_home(request):
         positive_percent = neutral_percent = negative_percent = 0
 
     recent_admin_activities = list(AdminActivity.objects.all().order_by('-created_at'))
-    recent_feedbacks = list(Feedback.objects.filter(is_genuine_feedback=True).order_by('-created_at')[:10])
+    recent_feedbacks = list(genuine_attended_feedback_qs.order_by('-created_at')[:10])
 
     def format_activity_time(dt):
         if timezone.is_naive(dt):
@@ -1640,7 +1702,11 @@ def admin_add_event(request):
         location    = request.POST.get('location', '').strip()
         event_date  = request.POST.get('event_date')
         event_time  = request.POST.get('event_time')
-        status      = request.POST.get('status', Event.STATUS_DRAFT)
+        requested_status = request.POST.get('status', Event.STATUS_DRAFT)
+        # ongoing/completed are computed automatically by auto_update_event_statuses();
+        # admin CRUD may only request draft / published / archived.
+        if requested_status not in (Event.STATUS_DRAFT, Event.STATUS_PUBLISHED, Event.STATUS_ARCHIVED):
+            requested_status = Event.STATUS_DRAFT
         capacity    = request.POST.get('capacity') or None
         person_in_charge       = request.POST.get('person_in_charge', '').strip() or None
         registration_deadline  = request.POST.get('registration_deadline') or None
@@ -1678,27 +1744,86 @@ def admin_add_event(request):
         if not event_name:
             errors.append("'Nama Event' wajib diisi.")
 
+        end_time = request.POST.get('end_time')
+        if event_time and end_time:
+            try:
+                if time.fromisoformat(end_time) <= time.fromisoformat(event_time):
+                    errors.append("'Waktu Selesai' harus setelah 'Waktu Mulai'.")
+            except (TypeError, ValueError):
+                errors.append("Format waktu event tidak valid.")
+
+        # Lifecycle gate: Published is only honored when every required
+        # field (Capacity & PIC excluded — they're always optional) is
+        # filled in. If the admin explicitly asked to Publish but something
+        # required is still missing, this is a hard validation error — the
+        # event is NOT saved, and the admin is told exactly what to fill in
+        # before it can be published. Leaving status as Draft never
+        # triggers this check.
+        if requested_status == Event.STATUS_PUBLISHED:
+            missing_fields = get_missing_required_fields_for_publish({
+                'event_name': event_name,
+                'description': description,
+                'location': location,
+                'event_date': parsed_event_date,
+                'event_time': event_time or None,
+                'end_time': end_time or None,
+                'image_url': image_path,
+                'registration_deadline': parsed_registration_deadline,
+                'attendance_open_time': parsed_attendance_open_time,
+                'attendance_close_time': parsed_attendance_close_time,
+            })
+            if missing_fields:
+                errors.append(
+                    "Event tidak bisa dipublish. Lengkapi field wajib berikut terlebih dahulu: "
+                    + ", ".join(missing_fields) + "."
+                )
+
         if not errors:
-            Event.objects.create(
+            new_event = Event.objects.create(
                 event_name=event_name,
                 description=description or None,
                 location=location or None,
                 event_date=parsed_event_date,
                 event_time=event_time or None,
+                end_time=end_time or None,
                 image_url=image_path,
-                status=status,
+                status=requested_status,
                 capacity=capacity or None,
                 person_in_charge=person_in_charge,
                 registration_deadline=parsed_registration_deadline,
                 attendance_open_time=parsed_attendance_open_time,
                 attendance_close_time=parsed_attendance_close_time,
             )
-            log_admin_activity(f"Event '{event_name}' dibuat dengan status '{status}'")
+            log_admin_activity(f"Event '{event_name}' dibuat dengan status '{requested_status}'")
             return redirect('admin_explore')
+
+        # Validasi gagal (mis. Publish tapi field wajib belum lengkap) ->
+        # event TIDAK disimpan ke DB (sengaja, sesuai aturan bisnis). Supaya
+        # form TIDAK terlihat "reset" ke admin, bangun objek Event sementara
+        # (belum di-save ke database) dari input yang barusan diketik, dan
+        # kirim itu sebagai `event` ke template — template lalu membaca
+        # ulang value setiap field dari objek ini persis seperti saat Edit
+        # Event, sehingga semua isian sebelumnya tetap tampil.
+        temp_event = Event(
+            event_name=event_name,
+            description=description,
+            location=location,
+            event_date=parsed_event_date,
+            event_time=event_time or None,
+            end_time=end_time or None,
+            image_url=image_path,
+            status=requested_status,
+            capacity=capacity or None,
+            person_in_charge=person_in_charge,
+            registration_deadline=parsed_registration_deadline,
+            attendance_open_time=parsed_attendance_open_time,
+            attendance_close_time=parsed_attendance_close_time,
+        )
 
         return render(request, 'cms/event_form.html', {
             'action': 'Tambah Event',
-            'event': None,
+            'event': temp_event,
+            'is_edit': False,
             'form_action': 'admin_add_event',
             'status_choices': Event.STATUS_CHOICES,
             'errors': errors,
@@ -1707,6 +1832,7 @@ def admin_add_event(request):
     return render(request, 'cms/event_form.html', {
         'action': 'Tambah Event',
         'event': None,
+        'is_edit': False,
         'form_action': 'admin_add_event',
         'status_choices': Event.STATUS_CHOICES,
     })
@@ -1720,7 +1846,14 @@ def admin_edit_event(request, id):
         event.event_name   = request.POST.get('event_name', '').strip() or event.event_name
         event.description  = request.POST.get('description', '').strip() or event.description
         event.location     = request.POST.get('location', '').strip() or event.location
-        event.status       = request.POST.get('status', event.status)
+        # ongoing/completed are computed automatically by auto_update_event_statuses();
+        # admin CRUD may only request draft / published / archived. The
+        # actual status saved is decided AFTER all fields below are applied
+        # to `event` (see the lifecycle gate near the end of this view) —
+        # Published is only honored once every required field is complete.
+        requested_status = request.POST.get('status', event.status)
+        if requested_status not in (Event.STATUS_DRAFT, Event.STATUS_PUBLISHED, Event.STATUS_ARCHIVED):
+            requested_status = Event.STATUS_DRAFT
         event.person_in_charge = request.POST.get('person_in_charge', '').strip() or event.person_in_charge
 
         errors = []
@@ -1750,6 +1883,7 @@ def admin_edit_event(request, id):
 
         event_date = request.POST.get('event_date')
         event_time = request.POST.get('event_time')
+        end_time   = request.POST.get('end_time')
 
         if event_date:
             try:
@@ -1757,10 +1891,18 @@ def admin_edit_event(request, id):
             except (TypeError, ValueError):
                 errors.append("Format 'Tanggal Event' tidak valid.")
 
+        if event_time and end_time:
+            try:
+                if time.fromisoformat(end_time) <= time.fromisoformat(event_time):
+                    errors.append("'Waktu Selesai' harus setelah 'Waktu Mulai'.")
+            except (TypeError, ValueError):
+                errors.append("Format waktu event tidak valid.")
+
         if errors:
             return render(request, 'cms/event_form.html', {
                 'action': 'Edit Event',
                 'event': event,
+                'is_edit': True,
                 'form_action': 'admin_edit_event',
                 'status_choices': Event.STATUS_CHOICES,
                 'errors': errors,
@@ -1775,6 +1917,35 @@ def admin_edit_event(request, id):
             event.image_url = f'events/{filename}'
 
         event.event_time = event_time or event.event_time
+        event.end_time   = end_time or event.end_time
+
+        # Lifecycle gate — checked last, once every other field on `event`
+        # (including a freshly-uploaded image, if any) reflects this save,
+        # so it's evaluated against the actual post-edit state. Published
+        # is only honored when every required field (Capacity & PIC
+        # excluded — always optional) is complete; if the admin explicitly
+        # asked to Publish but something is missing, this is a hard
+        # validation error — nothing is saved, and the admin is told
+        # exactly what to fill in. This is also what makes "Completed →
+        # re-save as Published" work: there's no special-case for the
+        # previous status here, a Completed event goes through the exact
+        # same completeness check as any other.
+        if requested_status == Event.STATUS_PUBLISHED:
+            missing_fields = event.get_missing_required_fields()
+            if missing_fields:
+                return render(request, 'cms/event_form.html', {
+                    'action': 'Edit Event',
+                    'event': event,
+                    'is_edit': True,
+                    'form_action': 'admin_edit_event',
+                    'status_choices': Event.STATUS_CHOICES,
+                    'errors': [
+                        "Event tidak bisa dipublish. Lengkapi field wajib berikut terlebih dahulu: "
+                        + ", ".join(missing_fields) + "."
+                    ],
+                })
+
+        event.status = requested_status
         event.save()
         log_admin_activity(f"Event '{old_name}' diperbarui → '{event.event_name}' (status: {event.status})")
         return redirect('admin_explore')
@@ -1782,6 +1953,7 @@ def admin_edit_event(request, id):
     return render(request, 'cms/event_form.html', {
         'action': 'Edit Event',
         'event': event,
+        'is_edit': True,
         'form_action': 'admin_edit_event',
         'status_choices': Event.STATUS_CHOICES,
     })
@@ -1817,8 +1989,27 @@ def admin_change_event_status(request, id):
     if request.method == 'POST':
         event = get_object_or_404(Event, event_id=id)
         new_status = request.POST.get('status') or json.loads(request.body or '{}').get('status')
-        valid = [s[0] for s in Event.STATUS_CHOICES]
+        # ongoing/completed are automation-only (see auto_update_event_statuses());
+        # this manual endpoint may only request draft / published / archived.
+        valid = [Event.STATUS_DRAFT, Event.STATUS_PUBLISHED, Event.STATUS_ARCHIVED]
         if new_status in valid:
+            # Same lifecycle gate as admin_add_event/admin_edit_event: a
+            # request to Publish only succeeds if the event is actually
+            # complete (Capacity & PIC excluded — always optional).
+            # Otherwise nothing is changed — the admin is required to fill
+            # in the missing fields (via Edit Event) before this event can
+            # be published.
+            if new_status == Event.STATUS_PUBLISHED and not event.is_ready_to_publish:
+                missing = ", ".join(event.get_missing_required_fields())
+                message = (
+                    f"Event '{event.event_name}' belum bisa dipublish. "
+                    f"Lengkapi field wajib berikut terlebih dahulu: {missing}."
+                )
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': message}, status=400)
+                messages.error(request, message)
+                return redirect('admin_explore')
+
             old = event.status
             event.status = new_status
             event.save()
@@ -1946,7 +2137,21 @@ def feedback_admin(request):
     event_qs = Event.objects.filter(status__in=['completed', 'archived']).order_by('event_name')
     event_options = list(event_qs.values('event_id', 'event_name'))
 
-    base_qs = Feedback.objects.filter(is_genuine_feedback=True).order_by('-created_at')
+    # Only feedback from participants who actually attended the event should count
+    # toward the totals / pie chart / recent list. "Attended" = they have an
+    # Attendance record tied to their event registration for that same event
+    # (matched by event + email). Feedback with no event ('General') can never
+    # satisfy this, since attendance is always tied to a specific event.
+    attended_qs = Attendance.objects.filter(
+        event_registration__event_id=OuterRef('event_id'),
+        event_registration__email__iexact=OuterRef('participant_email'),
+    )
+
+    base_qs = Feedback.objects.filter(
+        is_genuine_feedback=True,
+    ).annotate(
+        has_attended=Exists(attended_qs)
+    ).filter(has_attended=True).order_by('-created_at')
 
     # Filter by selected event(s) using FK. 'General' means event is null.
     if selected_events and 'all' not in selected_events:
@@ -2361,6 +2566,60 @@ def admin_verify_attendance(request, attendance_id):
         att.verified_at = timezone.now()
         att.save()
         log_admin_activity(f"Attendance #{attendance_id} ({att.participant_email}) diverifikasi")
+
+        # ================= RECOMPUTE GENUINE FEEDBACK =================
+        # Attendance baru saja verified -> feedback lama milik email+event
+        # yang sama, yang saat dikirim sudah terdeteksi LLM sebagai
+        # feedback asli (is_feedback_detected=True) tapi belum ditandai
+        # is_genuine_feedback (karena waktu itu attendance belum verified),
+        # sekarang boleh dihitung genuine. Pakai is_feedback_detected yang
+        # sudah tersimpan supaya tidak perlu manggil ulang LLM/re-classify.
+        #
+        # Tanpa event terkait, attendance_ok sudah otomatis True saat
+        # feedback dibuat (lihat chat_with_ai), jadi tidak ada yang perlu
+        # direcompute untuk feedback tanpa event_id.
+        event_id = att.event_registration.event_id if att.event_registration else None
+
+        if event_id:
+            pending_feedbacks = list(Feedback.objects.filter(
+                participant_email__iexact=att.participant_email,
+                event_id=event_id,
+                is_genuine_feedback=False,
+                is_feedback_detected=True,
+            ))
+
+            for fb in pending_feedbacks:
+                # Sentimen belum tersimpan untuk feedback yang tadinya
+                # tidak genuine (lihat chat_with_ai: sentiment hanya
+                # disimpan kalau is_genuine_feedback True). Re-classify
+                # di sini pakai sentiment_analyzer lokal (bukan LLM Groq),
+                # jadi tidak melanggar tujuan menghindari re-classify LLM.
+                if fb.sentiment is None:
+                    try:
+                        fb.sentiment, _ = classify_feedback(fb.message)
+                    except Exception:
+                        pass
+                fb.is_genuine_feedback = True
+                fb.save(update_fields=['is_genuine_feedback', 'sentiment'])
+
+            if pending_feedbacks:
+                log_admin_activity(
+                    f"Recompute {len(pending_feedbacks)} feedback ({att.participant_email}) "
+                    f"jadi genuine setelah attendance #{attendance_id} diverifikasi"
+                )
+
+                # Rating rata-rata event bisa berubah kalau di antara
+                # feedback yang baru jadi genuine ada yang punya rating.
+                avg_rating = Feedback.objects.filter(
+                    event_id=event_id,
+                    rating__isnull=False,
+                    is_genuine_feedback=True,
+                ).aggregate(avg=Avg('rating'))['avg']
+
+                Event.objects.filter(event_id=event_id).update(
+                    rating=round(avg_rating, 1) if avg_rating is not None else None
+                )
+
     return redirect('admin_attendance')
 
 
@@ -2372,77 +2631,3 @@ def admin_reject_attendance(request, attendance_id):
         att.save()
         log_admin_activity(f"Attendance #{attendance_id} ({att.participant_email}) ditolak")
     return redirect('admin_attendance')
-
-def submit_contact_us(request):
-    from django.http import JsonResponse
-    if request.method == 'POST':
-        full_name = request.POST.get('name')
-        email = request.POST.get('email')
-        message = request.POST.get('message')
-        
-        if not full_name or not email or not message:
-            return JsonResponse({'success': False, 'message': 'All fields are required.'})
-            
-        from .models import ContactUs
-        from django.utils import timezone
-        
-        ContactUs.objects.create(
-            full_name=full_name,
-            email=email,
-            message=message,
-            status='new',
-            created_at=timezone.now()
-        )
-        return JsonResponse({'success': True, 'message': 'Thank you! Your message has been sent.'})
-        
-    return JsonResponse({'success': False, 'message': 'Invalid request method.'})
-
-@admin_login_required
-def admin_contact_tracking(request):
-    from .models import ContactUs
-    from django.db.models import Q, F
-    
-    query = request.GET.get('q', '')
-    
-    # Exclude those without created_at if any, but order by created_at desc is fine.
-    # The existing table might have nulls if it was an old table, but recent ones won't.
-    contacts = ContactUs.objects.all().order_by(F('created_at').desc(nulls_last=True))
-    
-    if query:
-        contacts = contacts.filter(
-            Q(full_name__icontains=query) | Q(email__icontains=query)
-        )
-        
-    context = {
-        'contacts': contacts,
-        'search_query': query,
-        'active_menu': 'contact_tracking',
-    }
-    return render(request, 'cms/admin_contact_tracking.html', context)
-
-@admin_login_required
-def admin_delete_contact(request, contact_id):
-    from .models import ContactUs
-    if request.method == 'POST':
-        contact = get_object_or_404(ContactUs, id=contact_id)
-        log_admin_activity(f"Contact Us record dari {contact.full_name} dihapus")
-        contact.delete()
-    return redirect('admin_contact_tracking')
-
-@admin_login_required
-def admin_update_contact_status(request, contact_id):
-    from .models import ContactUs
-    from django.utils import timezone
-    if request.method == 'POST':
-        status = request.POST.get('status')
-        contact = get_object_or_404(ContactUs, id=contact_id)
-        if status in ['Read', 'Replied', 'Unread']:
-            contact.status = status
-            if status == 'Replied':
-                contact.replied_at = timezone.now()
-                pic_name = request.POST.get('pic')
-                if pic_name:
-                    contact.pic = pic_name.strip()
-            contact.save()
-            log_admin_activity(f"Status kontak dari {contact.full_name} diubah menjadi {status}")
-    return redirect('admin_contact_tracking')

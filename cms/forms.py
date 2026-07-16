@@ -1,6 +1,27 @@
 from django import forms
 
-from .models import EventRegistration
+from .models import Event, EventRegistration
+
+
+def get_missing_required_fields_for_publish(data):
+    """
+    Same required-for-publish rule as Event.get_missing_required_fields(),
+    but works on a plain dict of raw field values instead of a saved Event
+    instance. Used by admin_add_event(), where the values are still fresh
+    off request.POST and no Event row exists yet to run the instance
+    method against.
+
+    `data` keys should match Event.REQUIRED_FOR_PUBLISH_FIELDS field names
+    (event_name, description, location, event_date, event_time, end_time,
+    image_url). Capacity and person_in_charge are never checked here either
+    — always optional, same as the instance method.
+    """
+    missing = []
+    for field_name in Event.REQUIRED_FOR_PUBLISH_FIELDS:
+        value = data.get(field_name)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            missing.append(Event.REQUIRED_FIELD_LABELS.get(field_name, field_name))
+    return missing
 
 
 class EventRegistrationForm(forms.ModelForm):
