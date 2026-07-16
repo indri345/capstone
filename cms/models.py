@@ -513,17 +513,3 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.participant_email} — {self.event_registration.event_name} [{self.status}]"
-
-class ContactUs(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    full_name = models.CharField(max_length=255)
-    email = models.EmailField(max_length=255)
-    message = models.TextField()
-    status = models.CharField(max_length=20, blank=True, null=True)
-    created_at = models.DateTimeField(blank=True, null=True)
-    replied_at = models.DateTimeField(blank=True, null=True)
-    pic = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'contact_us'
